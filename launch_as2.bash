@@ -2,7 +2,7 @@
 
 usage() {
     echo "  options:"
-    echo "      -e: estimator_type, choices: [raw_odometry, mocap_pose]"
+    echo "      -e: estimator_type, choices: [raw_odometry, ground_truth]"
     echo "      -r: record rosbag"
     echo "      -t: launch keyboard teleoperation"
     echo "      -n: drone namespace, default is drone0"
@@ -61,11 +61,6 @@ do
   tmuxinator start -n ${ns} -p tmuxinator/session.yml drone_namespace=${ns} estimator_plugin=${estimator_plugin} &
   wait
 done
-
-if [[ ${estimator_plugin} == "mocap_pose" ]]; then
-  tmuxinator start -n mocap -p tmuxinator/mocap.yml &
-  wait
-fi
 
 if [[ ${record_rosbag} == "true" ]]; then
   tmuxinator start -n rosbag -p tmuxinator/rosbag.yml drone_namespace=$(list_to_string "${drone_ns[@]}") &

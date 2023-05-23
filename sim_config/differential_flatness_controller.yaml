@@ -1,0 +1,24 @@
+/**:
+  ros__parameters:
+    mass: 1.0
+    trajectory_control:
+      antiwindup_cte: 1.0
+      alpha: 0.1
+      kp:
+        x: 1.0
+        y: 1.0
+        z: 1.0
+      ki:
+        x: 0.0
+        y: 0.0
+        z: 0.0
+      kd:
+        x: 0.0
+        y: 0.0
+        z: 0.0
+      roll_control:
+        kp: 1.0
+      pitch_control:
+        kp: 1.0
+      yaw_control:
+        kp: 1.0

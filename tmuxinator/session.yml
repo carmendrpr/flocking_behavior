@@ -1,16 +1,15 @@
 <%
 # Input parameters
 drone_namespace     = @settings["drone_namespace"]
-gps                 = @settings["gps"] == "false"
 estimator_plugin    = @settings["estimator_plugin"]
 
 # Other parameters
-behavior_type               = "position"
-motion_controller_plugin    = "pid_speed_controller"
+behavior_type               = "trajectory"
+motion_controller_plugin    = "differential_flatness_controller"
 simulation                  = "false"
 
-if estimator_plugin == "mocap_pose"
-    state_estimator_config_file = "real_config/state_estimator_mocap.yaml"
+if estimator_plugin == "ground_truth"
+    state_estimator_config_file = "real_config/state_estimator_ground_truth.yaml"
 elsif estimator_plugin == "raw_odometry"
     state_estimator_config_file = "sim_config/state_estimator_odom.yaml"
 end
@@ -27,10 +26,12 @@ windows:
   - platform:
       layout: tiled
       panes:
-        - ros2 launch as2_platform as2_platform_launch.py
+        - ros2 launch as2_platform_naive_simulation platform_launch.py
             namespace:=<%= drone_namespace %>
             use_sim_time:=<%= simulation %>
-            platform_config_file:=real_config/platform_config.yaml
+            platform_config_file:=sim_config/platform_config.yaml
+            uav_config_file:=sim_config/uav_config.yaml
+            simulation_config_file:=sim_config/simulation_config.yaml
   - state_estimator:
       layout:
       panes:
@@ -46,8 +47,8 @@ windows:
             namespace:=<%= drone_namespace %>
             use_sim_time:=<%= simulation %>
             plugin_name:=<%= motion_controller_plugin %>
-            motion_controller_config_file:=real_config/motion_controller.yaml
-            plugin_config_file:=real_config/<%= motion_controller_plugin %>.yaml        
+            motion_controller_config_file:=sim_config/motion_controller.yaml
+            plugin_config_file:=sim_config/<%= motion_controller_plugin %>.yaml        
   - behaviors:
       layout:
       panes:
