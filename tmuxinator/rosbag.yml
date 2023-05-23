@@ -1,0 +1,13 @@
+<%
+# Input parameters
+drone_namespace = @settings["drone_namespace"]
+%>
+
+attach: true
+root: ./
+startup_window: rosbag
+windows:
+  - rosbag:
+      layout:
+      panes:
+        - ./rosbag/record_rosbag.bash <%= drone_namespace %>

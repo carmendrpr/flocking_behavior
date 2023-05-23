@@ -1,0 +1,16 @@
+#
+# Definition of all trackable objects
+# Identifier corresponds to Trackable ID set in Tracking Tools
+
+/**:
+    ros__parameters:
+        rigid_bodies:
+            1:
+                pose: "/drone0/ground_truth/pose"
+                pose2d: "/Robot_1/ground_pose"
+                child_frame_id: ""
+                parent_frame_id: ""
+        optitrack_config:
+            multicast_address: "239.255.42.99"
+            command_port: 1510
+            data_port: 1511
