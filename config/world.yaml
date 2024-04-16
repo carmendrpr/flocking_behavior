@@ -1,0 +1,9 @@
+drone0:
+  vehicle_initial_pose:
+    x: 1.0 # Initial x position of the vehicle in odometry frame. Meters (default: 0.0)
+    y: 10.0 # Initial y position of the vehicle in odometry frame. Meters (default: 0.0)
+    z: 0.0 # Initial z position of the vehicle in odometry frame. Meters (default: 0.0)
+  gps_origin: # GPS origin in latitude, longitude and altitude
+    latitude: 40.4405 # Latitude GPS origin. Degrees
+    longitude: -3.68982 # Longitude GPS origin. Degrees
+    altitude: 100.0 # Altitude GPS origin. Meters

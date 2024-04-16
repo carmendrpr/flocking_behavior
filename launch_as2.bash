@@ -2,17 +2,25 @@
 
 usage() {
     echo "  options:"
-    echo "      -e: estimator_type, choices: [raw_odometry, ground_truth]"
+    echo "      -n: drone namespace, default use world config"
+    echo "      -m: multi agent, default false"
+    echo "      -d: enable rviz visualization"
+    echo "      -e: estimator_type, choices: [raw_odometry, ground_truth, raw_odometry_gps]"
     echo "      -r: record rosbag"
     echo "      -t: launch keyboard teleoperation"
-    echo "      -n: drone namespace, default is drone0"
 }
 
 # Arg parser
-while getopts "se:rtn" opt; do
+while getopts "n:mdrte:" opt; do
   case ${opt} in
-    e )
-      estimator_plugin="${OPTARG}"
+    n )
+      drone_namespace="${OPTARG}"
+      ;;
+    m )
+      swarm="true"
+      ;;
+    d )
+      rviz="true"
       ;;
     r )
       record_rosbag="true"
@@ -20,8 +28,8 @@ while getopts "se:rtn" opt; do
     t )
       launch_keyboard_teleop="true"
       ;;
-    n )
-      drone_namespace="${OPTARG}"
+    e )
+      estimator_plugin="${OPTARG}"
       ;;
     \? )
       echo "Invalid option: -$OPTARG" >&2
@@ -38,39 +46,57 @@ while getopts "se:rtn" opt; do
   esac
 done
 
+
 source utils/tools.bash
 
 # Shift optional args
 shift $((OPTIND -1))
 
 ## DEFAULTS
-estimator_plugin=${estimator_plugin:="raw_odometry"}
+drone_namespace=${drone_namespace:=""}
+swarm=${swarm:="false"}
+rviz=${rviz:="false"}
+estimator_plugin=${estimator_plugin:="ground_truth"}
 record_rosbag=${record_rosbag:="false"}
 launch_keyboard_teleop=${launch_keyboard_teleop:="false"}
-drone_namespace=${drone_namespace:="drone"}
 
-# Generate the list of drone namespaces
-drone_ns=()
-num_drones=1
-for ((i=0; i<${num_drones}; i++)); do
-  drone_ns+=("$drone_namespace$i")
-done
+# If drone namespace is not provided, use world config
+drone_namespaces=()
+world_config="world.yaml"
+if [[ ${drone_namespace} == "" ]]; then
+  # If swarm is true, set world config to world_swarm.yaml, else world.yaml
+  if [[ ${swarm} == "true" ]]; then
+    world_config="world_swarm.yaml"
+  fi
+  # Get drone namespaces from world config
+  drone_namespaces=$(python3 utils/get_drones.py config/${world_config})
+  world_config="${world_config}"
+else
+  drone_namespaces=(${drone_namespace})
+  world_config="dummy.yaml"
+fi
 
-for ns in "${drone_ns[@]}"
-do
-  tmuxinator start -n ${ns} -p tmuxinator/session.yml drone_namespace=${ns} estimator_plugin=${estimator_plugin} &
+# For drone in drone_namespaces, create tmux session
+drone_namespaces_list=($(echo $drone_namespaces | tr ':' ' '))
+for drone_ns in "${drone_namespaces_list[@]}"; do
+  tmuxinator start -n ${drone_ns} -p tmuxinator/aerostack2.yml drone_namespace=${drone_ns} estimator_plugin=${estimator_plugin} world_config=${world_config} &
   wait
 done
 
+if [[ ${rviz} == "true" ]]; then
+  tmuxinator start -n rviz -p tmuxinator/rviz.yml rviz_config_file="config/tf_visualization.rviz" &
+  wait
+fi
+
 if [[ ${record_rosbag} == "true" ]]; then
-  tmuxinator start -n rosbag -p tmuxinator/rosbag.yml drone_namespace=$(list_to_string "${drone_ns[@]}") &
+  tmuxinator start -n rosbag -p tmuxinator/rosbag.yml drone_namespaces=${drone_namespaces} &
   wait
 fi
 
 if [[ ${launch_keyboard_teleop} == "true" ]]; then
-  tmuxinator start -n keyboard_teleop -p tmuxinator/keyboard_teleop.yml simulation=false drone_namespace=$(list_to_string "${drone_ns[@]}") &
+  drone_namespaces_comma=$(echo $drone_namespaces | tr ':' ',')
+  tmuxinator start -n keyboard_teleop -p tmuxinator/keyboard_teleop.yml simulation=false drone_namespaces=${drone_namespaces_comma} &
   wait
 fi
 
-# Attach to tmux session ${drone_ns[@]}, window 0
-tmux attach-session -t ${drone_ns[0]}:mission
+tmux attach-session -t ${drone_namespaces_list[0]}:mission

@@ -2,11 +2,11 @@
 
 # Set default input element
 if [ $# -eq 0 ]; then
-  set -- "drone0"
+  set -- "drone0 drone1 drone2"
 fi
 
 # Make a tmux list of sessions to be killed
-tmux_session_list=("keyboard_teleop" "rosbag" "mocap")
+tmux_session_list=("keyboard_teleop" "rosbag" "rviz" "drone0" "drone1" "drone2")
 
 # For each drone namespace, add to the list
 for ns in "$@"; do

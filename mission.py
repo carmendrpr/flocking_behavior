@@ -8,12 +8,10 @@ from as2_python_api.drone_interface import DroneInterface
 def drone_run(drone_interface: DroneInterface):
     """ Run the mission """
 
-    speed = 0.5
-    takeoff_height = 1.0
-    height = 1.0
-
-    sleep_time = 2.0
-
+    takeoff_height = 3.0
+    height = 3.0
+    speed = 1.0
+    sleep_time = 0.5
     dim = 2.0
     path = [
         [dim, dim, height],
@@ -35,15 +33,33 @@ def drone_run(drone_interface: DroneInterface):
 
     ##### TAKE OFF #####
     print("Take Off")
-    drone_interface.takeoff(takeoff_height, speed=1.0)
+    drone_interface.takeoff(takeoff_height, speed=0.5)
     print("Take Off done")
     sleep(sleep_time)
 
     ##### GO TO #####
     for goal in path:
+        print(f"Go to with keep yaw {goal}")
+        drone_interface.go_to.go_to_point(goal, speed=speed)
+        print("Go to done")
+    sleep(sleep_time)
+
+    for goal in path:
         print(f"Go to with path facing {goal}")
         drone_interface.go_to.go_to_point_path_facing(goal, speed=speed)
         print("Go to done")
+    sleep(sleep_time)
+
+    ##### FOLLOW PATH #####
+    print("Follow path with keep yaw")
+    drone_interface.follow_path.follow_path_with_keep_yaw(goal, speed=speed)
+    print("Follow path")
+    sleep(sleep_time)
+
+    print("Follow path with path facing")
+    drone_interface.follow_path.follow_path_with_path_facing(
+        goal, speed=speed)
+    print("Follow path")
     sleep(sleep_time)
 
     ##### LAND #####

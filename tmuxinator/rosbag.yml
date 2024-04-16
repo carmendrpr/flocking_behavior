@@ -1,13 +1,39 @@
 <%
+require 'date'
+
 # Input parameters
-drone_namespace = @settings["drone_namespace"]
+drone_namespaces = @settings["drone_namespaces"]
+
+# Other parameters
+## Same name as default, different path
+rosbag_name = DateTime.now.strftime("rosbag2_%Y_%m_%d-%H_%M_%S")
 %>
 
+name: rosbag
 attach: true
 root: ./
+on_project_start: mkdir rosbags 2>/dev/null
 startup_window: rosbag
 windows:
   - rosbag:
       layout:
       panes:
-        - ./rosbag/record_rosbag.bash <%= drone_namespace %>
+        - ros2 bag record --include-hidden-topics -o ./rosbags/<%= rosbag_name %>
+          /tf
+          /tf_static
+          /rosout
+          <%- drone_namespaces.split(':').each do |drone| %>
+            /<%= drone %>/platform/info
+            /<%= drone %>/self_localization/pose
+            /<%= drone %>/self_localization/twist
+            /<%= drone %>/ground_truth/pose
+            /<%= drone %>/ground_truth/twist
+            /<%= drone %>/sensor_measurements/odom
+            /<%= drone %>/motion_reference/pose
+            /<%= drone %>/motion_reference/trajectory
+            /<%= drone %>/motion_reference/twist
+            /<%= drone %>/actuator_command/pose
+            /<%= drone %>/actuator_command/thrust
+            /<%= drone %>/actuator_command/twist
+            /<%= drone %>/actuator_command/trajectory
+          <%- end %>
