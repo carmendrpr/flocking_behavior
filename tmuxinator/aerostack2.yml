@@ -54,9 +54,17 @@ windows:
             go_to_plugin_name:=go_to_plugin_<%= behavior_type %>
             takeoff_plugin_name:=takeoff_plugin_<%= behavior_type %>
             land_plugin_name:=land_plugin_speed
+        <% if behavior_type == "trajectory" %>
         - ros2 launch as2_behaviors_trajectory_generation generate_polynomial_trajectory_behavior_launch.py
             namespace:=<%= drone_namespace %>
             use_sim_time:=<%= use_sim_time %>
+        <% end %>
+        - ros2 launch as2_behaviors_perception point_gimbal_behavior.launch.py
+            namespace:=<%= drone_namespace %>
+            use_sim_time:=<%= use_sim_time %>
+            gimbal_name:=gimbal
+            gimbal_frame_id:=gimbal
+            gimbal_base_frame_id:=gimbal_base
   - mission:
       layout:
       panes:
