@@ -3,10 +3,10 @@
 # Launch guide
 
 Parameters:
-* -n <namespace> - namespace for the drone. Default, not specified and uses `config/world.yaml` configuration. If specified, it uses `config/platform_config_file.yaml` configuration.
+* -n namespace - namespace for the drone. Default, not specified and uses `config/world.yaml` configuration. If specified, it uses `config/platform_config_file.yaml` configuration.
 * -m - multi agent mode. Default is disabled. If specified, it uses `config/world_swarm.yaml` configuration.
 * -d - launch rviz visualization. If not specified, it does not launch rviz visualization. If specified, it launches rviz visualization with `config/tf_visualization.rviz` configuration.
-* -e - estimator type. Default is `ground_truth`. Available options: `ground_truth`, `raw_odometry`, `raw_odometry_gps`. It uses configuration from `config/state_estimator*.yaml`.
+* -e estimator type - estimator type. Default is `ground_truth`. Available options: `ground_truth`, `raw_odometry`, `raw_odometry_gps`. It uses configuration from `config/state_estimator*.yaml`.
 * -r - record rosbag. Default is disabled. If specified, it records rosbag in `rosbag` directory.
 * -t - launch keyboard teleoperation. Default is disabled. If specified, it launches keyboard teleoperation.
 
