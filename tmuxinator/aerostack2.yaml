@@ -1,0 +1,72 @@
+<%
+# Input parameters
+drone_namespace           = @settings["drone_namespace"]
+simulation_config_file    = @settings["simulation_config_file"]
+motion_controller_plugin  = @settings["motion_controller_plugin"]
+base_launch               = @settings["base_launch"] == "true"
+behavior_tree             = @settings["behavior_tree"] == "true"
+%>
+name: <%= drone_namespace %>
+attach: false
+root: ./
+startup_window: mission_monitoring
+windows:
+  # Platform
+  - platform:
+      layout: tiled
+      panes:
+      # Platform
+        - ros2 launch as2_platform_multirotor_simulator as2_platform_multirotor_simulator.launch.py
+            namespace:=<%= drone_namespace %>
+            config_file:=config/config.yaml
+            uav_config:=config/uav_config.yaml
+            world_config:=<%= simulation_config_file %>
+
+  # Basic Robotics Functions
+  - basics_robotics_functions:
+      layout:
+      panes:
+        # State Estimation
+        - ros2 launch as2_state_estimator state_estimator_launch.py
+            namespace:=<%= drone_namespace %>
+            config_file:=config/config.yaml
+        # Motion Controller
+        - ros2 launch as2_motion_controller controller_launch.py
+            namespace:=<%= drone_namespace %>
+            config_file:=config/config.yaml
+            plugin_name:=<%= motion_controller_plugin %>
+            plugin_config_file:=config/<%= motion_controller_plugin %>.yaml
+
+  # Behaviors
+  - behaviors:
+      layout:
+      panes:
+        # Motion Behaviors
+        - ros2 launch as2_behaviors_motion motion_behaviors_launch.py
+            namespace:=<%= drone_namespace %>
+            config_file:=config/config.yaml
+        # Trajectory Generation Behavior
+        - ros2 launch as2_behaviors_trajectory_generation generate_polynomial_trajectory_behavior_launch.py
+            namespace:=<%= drone_namespace %>
+            config_file:=config/config.yaml
+        # Point Gimbal Behavior
+        - ros2 launch as2_behaviors_perception point_gimbal_behavior.launch.py
+            namespace:=<%= drone_namespace %>
+            config_file:=config/config.yaml
+
+  # Mission execution
+  - mission_execution:
+      layout:
+      panes:
+        <%- if behavior_tree %>
+        - ros2 launch as2_behavior_tree behavior_trees.launch.py
+            drone_id:=<%= drone_namespace %>
+            tree:=./trees/square.xml
+        <%- end %>
+
+  # Mission monitoring
+  - mission_monitoring:
+      layout: tiled
+      panes:
+        - ros2 run as2_alphanumeric_viewer as2_alphanumeric_viewer_node
+            --ros-args -r  __ns:=/<%= drone_namespace %>

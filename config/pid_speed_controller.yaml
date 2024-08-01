@@ -39,8 +39,8 @@
       alpha: 0.3
       height:
         kp: 1.0
-        kd: 1.0
-        ki: 1.0
+        kd: 0.0
+        ki: 0.01
       speed:
         kp:
           x: 0.0

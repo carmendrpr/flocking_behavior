@@ -2,31 +2,36 @@
 
 usage() {
     echo "  options:"
-    echo "      -c: motion controller plugin (pid_speed_controller, differential_flatness_controller), choices: [pid, df]. Default: pid"
     echo "      -m: multi agent"
-    echo "      -b: launch behavior tree"
+    echo "      -t: launch keyboard teleoperation. Default not launch"
+    echo "      -v: open rviz. Default launch"
+    echo "      -r: record rosbag. Default not launch"
     echo "      -n: drone namespaces, comma separated. Default get from world config file"
     echo "      -g: launch using gnome-terminal instead of tmux"
 }
 
 # Initialize variables with default values
-motion_controller_plugin="pid"
 swarm="false"
-behavior_tree="false"
+keyboard_teleop="false"
+rviz="true"
+rosbag="false"
 drones_namespace_comma=""
 use_gnome="false"
 
-# Arg parser
-while getopts "cmbn:g" opt; do
+# Parse command line arguments
+while getopts "mtvrn:g" opt; do
   case ${opt} in
-    c )
-      motion_controller_plugin="${OPTARG}"
-      ;;
     m )
       swarm="true"
       ;;
-    b )
-      behavior_tree="true"
+    t )
+      keyboard_teleop="true"
+      ;;
+    v )
+      rviz="false"
+      ;;
+    r )
+      rosbag="true"
       ;;
     n )
       drones_namespace_comma="${OPTARG}"
@@ -40,7 +45,7 @@ while getopts "cmbn:g" opt; do
       exit 1
       ;;
     : )
-      if [[ ! $OPTARG =~ ^[wrt]$ ]]; then
+      if [[ ! $OPTARG =~ ^[swrt]$ ]]; then
         echo "Option -$OPTARG requires an argument" >&2
         usage
         exit 1
@@ -60,22 +65,6 @@ fi
 if [ -z "$drones_namespace_comma" ]; then
   drones_namespace_comma=$(python3 utils/get_drones.py -p ${simulation_config} --sep ',')
 fi
-IFS=',' read -r -a drone_namespaces <<< "$drones_namespace_comma"
-
-# Check if motion controller plugins are valid
-case ${motion_controller_plugin} in
-  pid )
-    motion_controller_plugin="pid_speed_controller"
-    ;;
-  df )
-    motion_controller_plugin="differential_flatness_controller"
-    ;;
-  * )
-    echo "Invalid motion controller plugin: ${motion_controller_plugin}" >&2
-    usage
-    exit 1
-    ;;
-esac
 
 # Select between tmux and gnome-terminal
 tmuxinator_mode="start"
@@ -86,26 +75,17 @@ if [[ ${use_gnome} == "true" ]]; then
   tmuxinator_end="> ${tmp_file} && python3 utils/tmuxinator_to_genome.py -p ${tmp_file} && wait"
 fi
 
-# Launch aerostack2 for each drone namespace
-for namespace in ${drone_namespaces[@]}; do
-  base_launch="false"
-  if [[ ${namespace} == ${drone_namespaces[0]} ]]; then
-    base_launch="true"
-  fi
-  eval "tmuxinator ${tmuxinator_mode} -n ${namespace} -p tmuxinator/aerostack2.yaml \
-    drone_namespace=${namespace} \
-    simulation_config_file=${simulation_config} \
-    motion_controller_plugin=${motion_controller_plugin} \
-    base_launch=${base_launch} \
-    behavior_tree=${behavior_tree} \
-    ${tmuxinator_end}"
-
-  sleep 0.1 # Wait for tmuxinator to finish
-done
+# Launch aerostack2 ground station
+eval "tmuxinator ${tmuxinator_mode} -n ground_station -p tmuxinator/ground_station.yaml \
+  drone_namespace=${drones_namespace_comma} \
+  keyboard_teleop=${keyboard_teleop} \
+  rviz=${rviz} \
+  rosbag=${rosbag} \
+  ${tmuxinator_end}"
 
 # Attach to tmux session
 if [[ ${use_gnome} == "false" ]]; then
-  tmux attach-session -t ${drone_namespaces[0]}
+  tmux attach-session -t ground_station
 # If tmp_file exists, remove it
 elif [[ -f ${tmp_file} ]]; then
   rm ${tmp_file}

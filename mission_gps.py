@@ -28,7 +28,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-"""Simple mission for a single drone."""
+"""Simple mission GPS for a single drone."""
 
 __authors__ = 'Rafael Perez-Segui'
 __copyright__ = 'Copyright (c) 2024 Universidad Politécnica de Madrid'
@@ -37,29 +37,30 @@ __license__ = 'BSD-3-Clause'
 import argparse
 from time import sleep
 
-from as2_python_api.drone_interface import DroneInterface
+from as2_python_api.drone_interface_gps import DroneInterfaceGPS
 import rclpy
 
-TAKE_OFF_HEIGHT = 1.0  # Height in meters
+TAKE_OFF_HEIGHT = 5.0  # Height in meters
 TAKE_OFF_SPEED = 1.0  # Max speed in m/s
 SLEEP_TIME = 0.5  # Sleep time between behaviors in seconds
 SPEED = 1.0  # Max speed in m/s
-HEIGHT = 1.0  # Height in meters
-DIM = 2.0
-PATH = [
-    [-DIM, DIM, HEIGHT],
-    [-DIM, -DIM, HEIGHT],
-    [DIM, -DIM, HEIGHT],
-    [DIM, DIM, HEIGHT]
+HEIGHT = 5.0  # Height in meters
+GPS_PATH = [
+    [40.4405287, -3.6898277, HEIGHT],
+    [40.4405298, -3.6898296, HEIGHT],
+    [40.4405410, -3.6898235, HEIGHT],
+    [40.4405914, -3.6898241, HEIGHT],
+    [40.4405934, -3.6898216, HEIGHT],
+    [40.4405068, -3.6898277, HEIGHT]
 ]
 LAND_SPEED = 0.5  # Max speed in m/s
 
 
-def drone_start(drone_interface: DroneInterface) -> bool:
+def drone_start(drone_interface: DroneInterfaceGPS) -> bool:
     """
     Take off the drone.
 
-    :param drone_interface: DroneInterface object
+    :param drone_interface: DroneInterfaceGPS object
     :return: Bool indicating if the take off was successful
     """
     print('Start mission')
@@ -82,19 +83,19 @@ def drone_start(drone_interface: DroneInterface) -> bool:
     return success
 
 
-def drone_run(drone_interface: DroneInterface) -> bool:
+def drone_run(drone_interface: DroneInterfaceGPS) -> bool:
     """
     Run the mission for a single drone.
 
-    :param drone_interface: DroneInterface object
+    :param drone_interface: DroneInterfaceGPS object
     :return: Bool indicating if the mission was successful
     """
     print('Run mission')
 
     # Go to path with keep yaw
-    for goal in PATH:
+    for goal in GPS_PATH:
         print(f'Go to with keep yaw {goal}')
-        success = drone_interface.go_to.go_to_point(goal, speed=SPEED)
+        success = drone_interface.go_to.go_to_gps_point(goal, speed=SPEED)
         print(f'Go to success: {success}')
         if not success:
             return success
@@ -102,9 +103,9 @@ def drone_run(drone_interface: DroneInterface) -> bool:
         sleep(SLEEP_TIME)
 
     # Go to path facing
-    for goal in PATH:
+    for goal in GPS_PATH:
         print(f'Go to with path facing {goal}')
-        success = drone_interface.go_to.go_to_point_path_facing(goal, speed=SPEED)
+        success = drone_interface.go_to.go_to_gps_point_path_facing(goal, speed=SPEED)
         print(f'Go to success: {success}')
         if not success:
             return success
@@ -112,11 +113,11 @@ def drone_run(drone_interface: DroneInterface) -> bool:
         sleep(SLEEP_TIME)
 
 
-def drone_end(drone_interface: DroneInterface) -> bool:
+def drone_end(drone_interface: DroneInterfaceGPS) -> bool:
     """
     End the mission for a single drone.
 
-    :param drone_interface: DroneInterface object
+    :param drone_interface: DroneInterfaceGPS object
     :return: Bool indicating if the land was successful
     """
     print('End mission')
@@ -162,7 +163,7 @@ if __name__ == '__main__':
 
     rclpy.init()
 
-    uav = DroneInterface(
+    uav = DroneInterfaceGPS(
         drone_id=drone_namespace,
         use_sim_time=use_sim_time,
         verbose=verbosity)
