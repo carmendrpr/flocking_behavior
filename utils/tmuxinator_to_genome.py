@@ -35,57 +35,55 @@ __copyright__ = 'Copyright (c) 2024 Universidad Politécnica de Madrid'
 __license__ = 'BSD-3-Clause'
 
 import argparse
-import subprocess
 from pathlib import Path
+import re
+import subprocess
 
 
-def launch_terminals(cmd_lists: list):
-    """Launch gnome terminals with the given commands.
+class GnomeTerminal:
+    def __init__(self):
+        self.commands = []
+        self.initial_dir = None
 
-    :param cmd_lists: List of commands to execute in each terminal
-    :type cmd_lists: list
-    """
-    # Add gnome tab to each command
-    for i, cmd in enumerate(cmd_lists):
-        cmd_lists[i] = f'gnome-terminal --tab -- bash -c "sleep 1s; {cmd}; exec bash -i";'
-    
-    # Join the commands into a single string with spaces
-    cmd = ' '.join(cmd_lists)
+    def parse_tmuxinator_debug(self, filepath):
+        """Parse the tmuxinator debug output file to extract tmux send-keys commands."""
+        print(f'Parsing the file: {filepath}')
+        with open(filepath, 'r') as file:
+            lines = file.readlines()
 
-    # Execute the command using subprocess
-    cmd = f"gnome-terminal --window -- bash -c '{cmd}'"
+        # Extract the initial directory
+        for line in lines:
+            if line.startswith('cd '):
+                self.initial_dir = line.strip().split(' ')[1]
+                break
 
-    subprocess.run(cmd, shell=True, check=True)
+        # Extract tmux send-keys commands
+        send_keys_pattern = re.compile(r'tmux send-keys -t \S+ (.+) C-m')
+        for line in lines:
+            match = send_keys_pattern.search(line)
+            if match:
+                command = match.group(1).replace('\\', '')
+                self.commands.append(command)
+                print(f'Command extracted: {command}')
+
+    def open_gnome_terminal_with_tabs(self):
+        """Open GNOME Terminal with tabs and execute commands in each tab."""
+        if not self.commands or not self.initial_dir:
+            print('No commands or initial directory found.')
+            return
+
+        global_cmd = []
+        for cmd in self.commands:
+            global_cmd.append(
+                f'gnome-terminal --tab -- bash -c "sleep 0.1s; {cmd}; exec bash -i";')
+
+        cmd = ' '.join(global_cmd)
+        launch_command = f"gnome-terminal --window -- bash -c '{cmd}'"
+        # Execute the final command
+        subprocess.run(launch_command, shell=True)
 
 
-def tmuxinator_parse(tmunixator_ouput: str) -> list:
-    """Parse tmuxinator debug output to extract the commands.
-
-    :param tmunixator_ouput: tmuxinator debug output
-    :type tmunixator_ouput: str
-    :return: List of commands to execute in each terminal
-    :rtype: list
-    """
-    import re
-    # Extract the initial directory
-    initial_cd_cmd = ''
-    for line in tmunixator_ouput:
-        if line.startswith("cd "):
-            initial_cd_cmd = line.strip()
-            initial_dir = line.strip().split(" ")[1]
-            break
-    
-    # Extract tmux send-keys commands
-    send_keys_pattern = re.compile(r"tmux send-keys -t \S+ (.+) C-m")
-    commands = []
-    for line in tmunixator_ouput:
-        match = send_keys_pattern.search(line)
-        if match:
-            command = match.group(1).replace('\\', '')
-            commands.append(f'{initial_cd_cmd}; echo ${command}')
-    return commands
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Launch tmuxinator commands in separate gnome terminals.')
     parser.add_argument('-p', '--path', type=str, required=True,
@@ -94,9 +92,8 @@ if __name__ == "__main__":
 
     file_path = Path(args.path)
     if not file_path.exists():
-        raise FileNotFoundError(f"File {file_path} not found")
+        raise FileNotFoundError(f'File {file_path} not found')
 
-    with open(file_path, 'r') as file:
-        tmuxinator_debug_output = file.readlines()
-    commands = tmuxinator_parse(tmuxinator_debug_output)
-    launch_terminals(commands)
+    gnome_terminal = GnomeTerminal()
+    gnome_terminal.parse_tmuxinator_debug(file_path)
+    gnome_terminal.open_gnome_terminal_with_tabs()

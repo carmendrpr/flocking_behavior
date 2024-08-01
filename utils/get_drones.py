@@ -28,20 +28,22 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-"""Get drones names from config file"""
+"""Get drones names from config file."""
 
 __authors__ = 'Rafael Perez-Segui, Pedro Arias-Perez'
 __copyright__ = 'Copyright (c) 2024 Universidad Politécnica de Madrid'
 __license__ = 'BSD-3-Clause'
 
 import argparse
-import yaml
-from pathlib import Path
 import json
+from pathlib import Path
+
+import yaml
 
 
 def read_file(filename: Path) -> str:
-    """Read file content
+    """
+    Read file content.
 
     :param filename: Path to file
     :type filename: Path
@@ -62,7 +64,9 @@ def read_file(filename: Path) -> str:
 
 
 def get_drones_namespaces(filename: Path) -> list[str]:
-    """Get drone namespaces listed in config file (JSON or YAML)
+    """
+    Get drone namespaces listed in config file (JSON or YAML).
+
     Open file, read as JSON or YAML depending on file extension, and return namespaces as list
 
     :param filename: Path to drones config file
@@ -71,17 +75,17 @@ def get_drones_namespaces(filename: Path) -> list[str]:
     :rtype: list[str]
     """
     config = read_file(filename)
-    drones_namespaces=[]
-    
+    drones_namespaces = []
+
     # For Gazebo and PX4 SITL
     if 'drones' in config:
         for drone in config['drones']:
             # Gazebo
             if 'model_name' in drone:
-                drones_namespaces.append(drone["model_name"])
+                drones_namespaces.append(drone['model_name'])
             # PX4 SITL
             elif 'namespace' in drone:
-                drones_namespaces.append(drone["namespace"])
+                drones_namespaces.append(drone['namespace'])
     # AS2 Multirotor Simulator
     else:
         for drone in config:
@@ -90,19 +94,27 @@ def get_drones_namespaces(filename: Path) -> list[str]:
             drones_namespaces.append(drone)
 
     if len(drones_namespaces) == 0:
-        raise ValueError("No drones found in config file")
+        raise ValueError('No drones found in config file')
     return drones_namespaces
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('-p', '--config_file', type=str, required=True, help="Path to drones config file")
-    parser.add_argument('-s', '--separator', type=str, help="Separator", default=":")
+    parser.add_argument(
+        '-p', '--config_file',
+        type=str,
+        required=True,
+        help='Path to drones config file')
+    parser.add_argument(
+        '-s', '--separator',
+        type=str,
+        help='Separator',
+        default=':')
     args = parser.parse_args()
 
     config_file = Path(args.config_file)
     if not config_file.exists():
-        raise FileNotFoundError(f"File {config_file} not found")
+        raise FileNotFoundError(f'File {config_file} not found')
 
     # Get drones from config file
     drones = get_drones_namespaces(config_file)
