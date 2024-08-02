@@ -24,10 +24,11 @@ To launch aerostack2 nodes for each drone, execute once the following command:
 The flags for the components launcher are:
 
 - **-c**: motion controller plugin (pid_speed_controller, differential_flatness_controller), choices: [pid, df]. Default: pid
-- **-m**: multi agent
-- **-b**: launch behavior tree
-- **-n**: drone namespaces, comma separated. Default get from world config file
-- **-g**: launch using gnome-terminal instead of tmux
+- **-m**: multi agent. Default not set
+- **-n**: select drones namespace to launch, values are comma separated. By default, it will get all drones from world description file
+- **-g**: launch using gnome-terminal instead of tmux. Default not set
+
+
 
 ### 2. Launch aerostack2 nodes for the ground station
 To launch aerostack2 nodes for the ground station, execute once the following command:
@@ -38,12 +39,13 @@ To launch aerostack2 nodes for the ground station, execute once the following co
 
 The flags for the components launcher are:
 
-- **-m**: multi agent
+- **-m**: multi agent. Default not set
 - **-t**: launch keyboard teleoperation. Default not launch
 - **-v**: open rviz. Default launch
 - **-r**: record rosbag. Default not launch
-- **-n**: drone namespaces, comma separated. Default get from world config file
-- **-g**: launch using gnome-terminal instead of tmux
+- **-n**: drone namespaces, comma separated. Default get from world description config file
+- **-g**: launch using gnome-terminal instead of tmux. Default not set
+
 
 ### 3. Launch a mission
 There are several missions that can be executed:
@@ -85,10 +87,6 @@ There are several missions that can be executed:
 - **AS2 Behavior Trees single drone mission**: You can execute a mission that used AS2 Behavior Trees, launching the mission with:
   ```bash
   python3 mission_behavior_tree.py
-  ```
-  You must launch behavior trees with the flag `-b`, as:
-  ```bash
-  ./launch_as2.bash -b
   ```
 
 ### 4. End the execution

@@ -3,30 +3,25 @@
 usage() {
     echo "  options:"
     echo "      -c: motion controller plugin (pid_speed_controller, differential_flatness_controller), choices: [pid, df]. Default: pid"
-    echo "      -m: multi agent"
-    echo "      -b: launch behavior tree"
-    echo "      -n: drone namespaces, comma separated. Default get from world config file"
-    echo "      -g: launch using gnome-terminal instead of tmux"
+    echo "      -m: multi agent. Default not set"
+    echo "      -n: select drones namespace to launch, values are comma separated. By default, it will get all drones from world description file"
+    echo "      -g: launch using gnome-terminal instead of tmux. Default not set"
 }
 
 # Initialize variables with default values
 motion_controller_plugin="pid"
 swarm="false"
-behavior_tree="false"
 drones_namespace_comma=""
 use_gnome="false"
 
 # Arg parser
-while getopts "cmbn:g" opt; do
+while getopts "cmn:g" opt; do
   case ${opt} in
     c )
       motion_controller_plugin="${OPTARG}"
       ;;
     m )
       swarm="true"
-      ;;
-    b )
-      behavior_tree="true"
       ;;
     n )
       drones_namespace_comma="${OPTARG}"
@@ -49,14 +44,14 @@ while getopts "cmbn:g" opt; do
   esac
 done
 
-# Set simulation world config file
+# Set simulation world description config file
 if [[ ${swarm} == "true" ]]; then
   simulation_config="config/world_swarm.yaml"
 else
   simulation_config="config/world.yaml"
 fi
 
-# If no drone namespaces are provided, get them from the world config file
+# If no drone namespaces are provided, get them from the world description config file
 if [ -z "$drones_namespace_comma" ]; then
   drones_namespace_comma=$(python3 utils/get_drones.py -p ${simulation_config} --sep ',')
 fi
@@ -97,7 +92,6 @@ for namespace in ${drone_namespaces[@]}; do
     simulation_config_file=${simulation_config} \
     motion_controller_plugin=${motion_controller_plugin} \
     base_launch=${base_launch} \
-    behavior_tree=${behavior_tree} \
     ${tmuxinator_end}"
 
   sleep 0.1 # Wait for tmuxinator to finish

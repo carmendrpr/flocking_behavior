@@ -4,7 +4,6 @@ drone_namespace           = @settings["drone_namespace"]
 simulation_config_file    = @settings["simulation_config_file"]
 motion_controller_plugin  = @settings["motion_controller_plugin"]
 base_launch               = @settings["base_launch"] == "true"
-behavior_tree             = @settings["behavior_tree"] == "true"
 %>
 name: <%= drone_namespace %>
 attach: false
@@ -58,11 +57,10 @@ windows:
   - mission_execution:
       layout:
       panes:
-        <%- if behavior_tree %>
+        # Behavior tree
         - ros2 launch as2_behavior_tree behavior_trees.launch.py
             drone_id:=<%= drone_namespace %>
             tree:=./trees/square.xml
-        <%- end %>
 
   # Mission monitoring
   - mission_monitoring:

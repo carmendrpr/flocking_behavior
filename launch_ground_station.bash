@@ -2,12 +2,12 @@
 
 usage() {
     echo "  options:"
-    echo "      -m: multi agent"
+    echo "      -m: multi agent. Default not set"
     echo "      -t: launch keyboard teleoperation. Default not launch"
     echo "      -v: open rviz. Default launch"
     echo "      -r: record rosbag. Default not launch"
-    echo "      -n: drone namespaces, comma separated. Default get from world config file"
-    echo "      -g: launch using gnome-terminal instead of tmux"
+    echo "      -n: drone namespaces, comma separated. Default get from world description config file"
+    echo "      -g: launch using gnome-terminal instead of tmux. Default not set"
 }
 
 # Initialize variables with default values
@@ -54,14 +54,14 @@ while getopts "mtvrn:g" opt; do
   esac
 done
 
-# Set simulation world config file
+# Set simulation world description config file
 if [[ ${swarm} == "true" ]]; then
   simulation_config="config/world_swarm.yaml"
 else
   simulation_config="config/world.yaml"
 fi
 
-# If no drone namespaces are provided, get them from the world config file
+# If no drone namespaces are provided, get them from the world description config file
 if [ -z "$drones_namespace_comma" ]; then
   drones_namespace_comma=$(python3 utils/get_drones.py -p ${simulation_config} --sep ',')
 fi
