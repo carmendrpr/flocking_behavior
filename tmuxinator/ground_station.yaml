@@ -28,7 +28,6 @@ windows:
       <%- if keyboard_teleop %>
         - ros2 launch as2_keyboard_teleoperation as2_keyboard_teleoperation_launch.py
             namespace:=<%= drone_namespace %>
-            config_file:=config_ground_station/keyboard_teleop.yaml
       <%- end %>
       <%- if rviz %>
         - ros2 launch as2_visualization swarm_viz.launch.py
