@@ -1,7 +1,11 @@
 #!/bin/bash
 
-# Make a tmux list of sessions to be killed
-tmux_session_list=("ground_station")
+usage() {
+    echo "  Add tmux session names as arguments"
+}
+
+# Get tmux_session_list from command-line argument
+tmux_session_list=("$@")
 
 # If inside tmux session, get the current session name
 if [[ -n "$TMUX" ]]; then
@@ -9,7 +13,7 @@ if [[ -n "$TMUX" ]]; then
 fi
 
 # Send Ctrl+C signal to each window of each session
-for session in ${tmux_session_list[@]}; do
+for session in "${tmux_session_list[@]}"; do
   # Check if session exists
   if tmux has-session -t "$session" 2>/dev/null; then
     # Get the list of windows in the session
@@ -24,7 +28,7 @@ for session in ${tmux_session_list[@]}; do
 done
 
 # Kill all tmux sessions from the list except for the current one
-for session in ${tmux_session_list[@]}; do
+for session in "${tmux_session_list[@]}"; do
   if [[ "$session" != "$current_session" ]]; then
     tmux kill-session -t "$session" 2>/dev/null
   fi

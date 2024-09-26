@@ -19,8 +19,8 @@
       # # Indoor Raw Odometry
       # plugin_name: "raw_odometry"
       # # Outdoor (GPS)
-      use_gps: true
-      set_origin_on_start: true
+      # use_gps: true
+      # set_origin_on_start: true
 
   # Motion Controller
   controller_manager:

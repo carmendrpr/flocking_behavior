@@ -93,18 +93,9 @@ There are several missions that can be executed:
 
 If you are using tmux, you can end the execution with the following command:
 
-- **End the execution of all nodes**:
-  ```bash
-  ./stop_tmuxinator_as2.bash
-  ```
-- **End the execution of all nodes of the ground station**:
-  ```bash
-  ./stop_tmuxinator_ground_station.bash
-  ```
-- **End the execution of both**:
-  ```bash
-  ./stop_tmuxinator.bash
-  ```
+```bash
+./stop.bash
+```
 
 You can force the end of all tmux sessions with the command:
 ```bash
