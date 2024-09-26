@@ -1,4 +1,0 @@
-/**:
-  ros__parameters:
-    use_gps: false
-    set_origin_on_start: false

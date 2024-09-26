@@ -1,0 +1,40 @@
+<%
+# Input parameters
+drone_namespace = @settings["drone_namespace"]
+keyboard_teleop = @settings["keyboard_teleop"] == "true"
+rviz            = @settings["rviz"] == "true"
+rosbag          = @settings["rosbag"] == "true"
+%>
+
+name: ground_station
+attach: false
+root: ./
+windows:
+
+  # Mission monitoring
+  - mission_monitoring:
+      layout:
+      panes:
+    <%- drone_namespace.split(',').each do |drone| %>
+        - ros2 run as2_alphanumeric_viewer as2_alphanumeric_viewer_node
+            --ros-args -r  __ns:=/<%= drone %>
+    <%- end %>
+        - echo Run here the mission
+
+  # Ground station
+  - ground_station:
+      layout:
+      panes:
+      <%- if keyboard_teleop %>
+        - ros2 launch as2_keyboard_teleoperation as2_keyboard_teleoperation_launch.py
+            namespace:=<%= drone_namespace %>
+      <%- end %>
+      <%- if rviz %>
+        - ros2 launch as2_visualization swarm_viz.launch.py
+            namespace_list:=<%= drone_namespace %>
+            rviz_config:=config_ground_station/rviz2_config.rviz
+            drone_model:=quadrotor_base
+      <%- end %>
+      <%- if rosbag %>
+        - ./rosbag/record_rosbag.bash <%= drone_namespace %>
+      <%- end %>

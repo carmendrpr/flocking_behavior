@@ -28,17 +28,19 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-"""Simple mission for a single drone."""
+"""Simple mission for a single drone using the mission interpreter."""
 
-__authors__ = 'Rafael Perez-Segui'
+__authors__ = 'Rafael Perez-Segui, Pedro Arias-Perez'
 __copyright__ = 'Copyright (c) 2024 Universidad Politécnica de Madrid'
 __license__ = 'BSD-3-Clause'
 
 import argparse
-from time import sleep
+import json
 
-from as2_python_api.drone_interface import DroneInterface
 import rclpy
+
+from as2_python_api.mission_interpreter.mission import Mission
+from as2_python_api.mission_interpreter.mission_interpreter import MissionInterpreter
 
 TAKE_OFF_HEIGHT = 1.0  # Height in meters
 TAKE_OFF_SPEED = 1.0  # Max speed in m/s
@@ -53,87 +55,6 @@ PATH = [
     [DIM, DIM, HEIGHT]
 ]
 LAND_SPEED = 0.5  # Max speed in m/s
-
-
-def drone_start(drone_interface: DroneInterface) -> bool:
-    """
-    Take off the drone.
-
-    :param drone_interface: DroneInterface object
-    :return: Bool indicating if the take off was successful
-    """
-    print('Start mission')
-
-    # Arm
-    print('Arm')
-    success = drone_interface.arm()
-    print(f'Arm success: {success}')
-
-    # Offboard
-    print('Offboard')
-    success = drone_interface.offboard()
-    print(f'Offboard success: {success}')
-
-    # Take Off
-    print('Take Off')
-    success = drone_interface.takeoff(height=TAKE_OFF_HEIGHT, speed=TAKE_OFF_SPEED)
-    print(f'Take Off success: {success}')
-
-    return success
-
-
-def drone_run(drone_interface: DroneInterface) -> bool:
-    """
-    Run the mission for a single drone.
-
-    :param drone_interface: DroneInterface object
-    :return: Bool indicating if the mission was successful
-    """
-    print('Run mission')
-
-    # Go to path with keep yaw
-    for goal in PATH:
-        print(f'Go to with keep yaw {goal}')
-        success = drone_interface.go_to.go_to_point(goal, speed=SPEED)
-        print(f'Go to success: {success}')
-        if not success:
-            return success
-        print('Go to done')
-        sleep(SLEEP_TIME)
-
-    # Go to path facing
-    for goal in PATH:
-        print(f'Go to with path facing {goal}')
-        success = drone_interface.go_to.go_to_point_path_facing(goal, speed=SPEED)
-        print(f'Go to success: {success}')
-        if not success:
-            return success
-        print('Go to done')
-        sleep(SLEEP_TIME)
-
-
-def drone_end(drone_interface: DroneInterface) -> bool:
-    """
-    End the mission for a single drone.
-
-    :param drone_interface: DroneInterface object
-    :return: Bool indicating if the land was successful
-    """
-    print('End mission')
-
-    # Land
-    print('Land')
-    success = drone_interface.land(speed=LAND_SPEED)
-    print(f'Land success: {success}')
-    if not success:
-        return success
-
-    # Manual
-    print('Manual')
-    success = drone_interface.manual()
-    print(f'Manual success: {success}')
-
-    return success
 
 
 if __name__ == '__main__':
@@ -158,21 +79,87 @@ if __name__ == '__main__':
     verbosity = args.verbose
     use_sim_time = args.use_sim_time
 
-    print(f'Running mission for drone {drone_namespace}')
+    mission_json = f"""
+    {{
+        "target": "{drone_namespace}",
+        "verbose": "{verbosity}",
+        "use_sim_time": "{use_sim_time}",
+        "plan": [
+            {{
+                "behavior": "takeoff", 
+                "args": {{
+                    "height": {TAKE_OFF_HEIGHT},
+                    "speed": {TAKE_OFF_SPEED}
+                }}
+            }},
+            {{
+                "behavior": "go_to", 
+                "args": {{
+                    "x": {PATH[0][0]},
+                    "y": {PATH[0][1]},
+                    "z": {PATH[0][2]},
+                    "speed": {SPEED},
+                    "yaw_mode": 1
+                }}
+            }},
+            {{
+                "behavior": "go_to", 
+                "args": {{
+                    "x": {PATH[1][0]},
+                    "y": {PATH[1][1]},
+                    "z": {PATH[1][2]},
+                    "speed": {SPEED},
+                    "yaw_mode": 1
+                }}
+            }},
+            {{
+                "behavior": "go_to", 
+                "args": {{
+                    "x": {PATH[2][0]},
+                    "y": {PATH[2][1]},
+                    "z": {PATH[2][2]},
+                    "speed": {SPEED},
+                    "yaw_mode": 1
+                }}
+            }},
+            {{
+                "behavior": "go_to", 
+                "args": {{
+                    "x": {PATH[3][0]},
+                    "y": {PATH[3][1]},
+                    "z": {PATH[3][2]},
+                    "speed": {SPEED},
+                    "yaw_mode": 1
+                }}
+            }},
+            {{
+                "behavior": "land", 
+                "args": {{
+                    "speed": {LAND_SPEED}
+                }}
+            }}
+        ]
+    }}
+    """
+
+    mission = Mission.parse_raw(mission_json)
+
+    print(f"Mission to be executed: {mission}")
 
     rclpy.init()
 
-    uav = DroneInterface(
-        drone_id=drone_namespace,
-        use_sim_time=use_sim_time,
-        verbose=verbosity)
+    interpreter = MissionInterpreter(
+        mission=mission,
+        use_sim_time=use_sim_time)
+    
+    print('Start mission')
+    interpreter.drone.arm()
+    interpreter.drone.offboard()
+    print('Run mission')
+    interpreter.perform_mission()
 
-    success = drone_start(uav)
-    if success:
-        success = drone_run(uav)
-    success = drone_end(uav)
-
-    uav.shutdown()
+    print("Mission completed")
+    interpreter.shutdown()
     rclpy.shutdown()
     print('Clean exit')
     exit(0)

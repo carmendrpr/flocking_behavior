@@ -1,9 +1,15 @@
+/**:
+  platform:
+    ros__parameters: 
+      gps_origin: # GPS origin in latitude, longitude and altitude
+        latitude: 40.4405287 # Latitude GPS origin. Degrees
+        longitude: -3.6898277 # Longitude GPS origin. Degrees
+        altitude: 100.0 # Altitude GPS origin. Meters
+
 drone0:
-  vehicle_initial_pose:
-    x: 1.0 # Initial x position of the vehicle in odometry frame. Meters (default: 0.0)
-    y: 1.0 # Initial y position of the vehicle in odometry frame. Meters (default: 0.0)
-    z: 0.0 # Initial z position of the vehicle in odometry frame. Meters (default: 0.0)
-  gps_origin: # GPS origin in latitude, longitude and altitude
-    latitude: 40.4405 # Latitude GPS origin. Degrees
-    longitude: -3.68982 # Longitude GPS origin. Degrees
-    altitude: 100.0 # Altitude GPS origin. Meters
+  platform:
+    ros__parameters: 
+      vehicle_initial_pose:
+        x: 0.0 # Initial x position of the vehicle in odometry frame. Meters
+        y: 0.0 # Initial y position of the vehicle in odometry frame. Meters
+        z: 0.0 # Initial z position of the vehicle in odometry frame. Meters
