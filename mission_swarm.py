@@ -92,7 +92,7 @@ class Choreographer:
     def do_cycle(formation: list, index: int, height: int):
         """List to cycle with height"""
         return list(e + [height]
-                    for e in list(islice(cycle(formation), 0+index, 3+index)))
+                    for e in list(islice(cycle(formation), 0 + index, 3 + index)))
 
 
 class Dancer(DroneInterface):
@@ -237,7 +237,7 @@ def main():
 
     parser.add_argument('-n', '--namespaces',
                         type=list,
-                        default=['drone0', 'drone1', 'drone2'],
+                        default=['drone0', 'drone1'],
                         help='ID of the drone to be used in the mission')
     parser.add_argument('-v', '--verbose',
                         action='store_true',

@@ -42,11 +42,19 @@
   GoToBehavior:
     ros__parameters:
       go_to_plugin_name: "go_to_plugin_position"
+      tf_timeout_threshold: 0.0
       # go_to_plugin_name: "go_to_plugin_trajectory"
   FollowPathBehavior:
     ros__parameters:
       follow_path_plugin_name: "follow_path_plugin_position"
+      tf_timeout_threshold: 0.0
       # follow_path_plugin_name: "follow_path_plugin_trajectory"
+  FollowReferenceBehavior:
+    ros__parameters:
+      follow_reference_max_speed_x: 0.5
+      follow_reference_max_speed_y: 0.5
+      follow_reference_max_speed_z: 0.5
+      tf_timeout_threshold: 0.0
 
   # Behaviors Perception
   point_gimbal_behavior:

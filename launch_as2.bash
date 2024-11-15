@@ -89,6 +89,7 @@ for namespace in ${drone_namespaces[@]}; do
   fi
   eval "tmuxinator ${tmuxinator_mode} -n ${namespace} -p tmuxinator/aerostack2.yaml \
     drone_namespace=${namespace} \
+    drone_namespace_list=${drones_namespace_comma} \
     simulation_config_file=${simulation_config} \
     motion_controller_plugin=${motion_controller_plugin} \
     base_launch=${base_launch} \
