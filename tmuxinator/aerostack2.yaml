@@ -76,9 +76,9 @@ windows:
         #     tree:=./trees/square.xml
         
         <%- if base_launch %>
-        - ros2 launch as2_behavior_swarm swarm_behavior.launch.py
+        -  ros2 launch as2_behavior_swarm swarm_behavior.launch.py
         # - ros2 run as2_behavior_swarm swarm_behavior_node --ros-args -r  __ns:=/Swarm
-        - sleep 5 && python3 mission_swarm.py
+        - python3 mission_swarm.py
         <%- end %>
 
   # Mission monitoring
