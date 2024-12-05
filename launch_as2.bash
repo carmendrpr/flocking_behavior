@@ -44,6 +44,9 @@ while getopts "cmn:g" opt; do
   esac
 done
 
+# HOW TO INCLUDE MODULES FROM THE PROJECT
+export AS2_MODULES_PATH=$AS2_MODULES_PATH:$(pwd)/as2_python_api_modules
+
 # Set simulation world description config file
 if [[ ${swarm} == "true" ]]; then
   simulation_config="config/world_swarm.yaml"
