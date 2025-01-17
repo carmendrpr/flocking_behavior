@@ -35,8 +35,9 @@ __license__ = 'BSD-3-Clause'
 
 from typing import TYPE_CHECKING, Union
 
-from as2_behavior_swarm_msgs.action import Swarm
-from as2_behavior_swarm_msgs.srv import StartSwarm
+from as2_msgs.action import SwarmFlocking
+# from as2_behavior_swarm_msgs.srv import StartSwarm
+from as2_msgs.srv import SetSwarmFormation
 from as2_msgs.msg import PoseWithID, YawMode
 from geometry_msgs.msg import Pose
 from nav_msgs.msg import Path
@@ -55,32 +56,39 @@ class FlockingBehavior(BehaviorHandler):
         self.__drone = drone
 
         try:
-            super().__init__(drone, Swarm, '/Swarm/SwarmBehavior')
+            super().__init__(drone, SwarmFlocking, '/Swarm/SwarmFlockingBehavior')
         except self.BehaviorNotAvailable as err:
             self.__drone.get_logger().warn(str(err))
 
-        self._start_swarm = self.__drone.create_client(StartSwarm, '/Swarm/start_swarm')
+        self._set_swarm_formation = self.__drone.create_client(
+            SetSwarmFormation, '/Swarm/set_swarm_formation')
 
     def go_to_init_poses(self):
         """Drones in swarm go to initial poses."""
-        msg = StartSwarm.Request()
-        msg.start = 'start'
+        msg = SetSwarmFormation.Request()
+        msg.start_drones = True
 
-        return self._start_swarm.call(msg)
+        return self._set_swarm_formation.call(msg)
+
+    def modify_formation(self, new_pose: list[PoseWithID]):
+        msg = SetSwarmFormation.Request()
+        msg.modified_swarm = True
+        msg.swarm_formation = self.__get_new_pose(new_pose)
+        return self._set_swarm_formation.call(msg)
 
     def start(self, path: Union[list, tuple, Path, PoseWithID],
               speed: float, yaw_mode: int, yaw_angle: float, frame_id: str = 'earth',
               wait_result: bool = True) -> bool:
         """Start behavior."""
-        goal_msg = Swarm.Goal()
-        goal_msg.header.stamp = self.__drone.get_clock().now().to_msg()
-        goal_msg.header.frame_id = frame_id
-        goal_msg.path = self.__get_path(path)
+        goal_msg = SwarmFlocking.Goal()
+        goal_msg.swarm_follow_path.header.stamp = self.__drone.get_clock().now().to_msg()
+        goal_msg.swarm_follow_path.header.frame_id = frame_id
+        goal_msg.swarm_follow_path.path = self.__get_path(path)
         yaw_msg = YawMode()
         yaw_msg.angle = yaw_angle
         yaw_msg.mode = yaw_mode
-        goal_msg.yaw_swarm = yaw_msg
-        goal_msg.max_speed = speed
+        goal_msg.swarm_follow_path.yaw_swarm = yaw_msg
+        goal_msg.swarm_follow_path.max_speed = speed
         try:
             return super().start(goal_msg, wait_result)
         except self.GoalRejected as err:
@@ -88,18 +96,27 @@ class FlockingBehavior(BehaviorHandler):
         return False
 
     def modify(self, path: Union[list, tuple, Path, PoseWithID],
-               speed: float, yaw_mode: int, yaw_angle: float, frame_id: str = 'earth'):
+               speed: float, yaw_mode: int, yaw_angle: float, new_pose: list, active: bool, frame_id: str = 'earth'):
         """Modify behavior."""
-        goal_msg = Swarm.Goal()
-        goal_msg.header.stamp = self.__drone.get_clock().now().to_msg()
-        goal_msg.header.frame_id = frame_id
-        goal_msg.path = self.__get_path(path)
+        goal_msg = SwarmFlocking.Goal()
+        goal_msg.swarm_follow_path.header.stamp = self.__drone.get_clock().now().to_msg()
+        goal_msg.swarm_follow_path.header.frame_id = frame_id
+        goal_msg.swarm_follow_path.path = self.__get_path(path)
         yaw_msg = YawMode()
         yaw_msg.angle = yaw_angle
         yaw_msg.mode = yaw_mode
-        goal_msg.yaw_swarm = yaw_msg
-        goal_msg.max_speed = speed
-        return super().modify(goal_msg)
+        goal_msg.swarm_follow_path.yaw_swarm = yaw_msg
+        goal_msg.swarm_follow_path.max_speed = speed
+        goal_msg.active = active
+        goal_msg.swarm_formation.new_pose = self.__get_new_pose(new_pose)
+
+        try:
+            return super().start(goal_msg)
+        except self.GoalRejected as err:
+            self.__drone.get_logger().warn(str(err))
+        return False
+
+        # return super().modify(goal_msg)
 
     def __get_path(self, path: Union[list, tuple, Path, PoseWithID]):
         """Get trajectory msg."""
@@ -131,4 +148,17 @@ class FlockingBehavior(BehaviorHandler):
             pose_with_id.pose.position.z = float(waypoint[2])
             pose_with_id_list.append(pose_with_id)
             id_ += 1
+        return pose_with_id_list
+
+    def __get_new_pose(self, new_pose: list[PoseWithID]):
+        """Get new pose msg."""
+        pose_with_id_list = []
+        for poses in new_pose:
+            pose_with_id = PoseWithID()
+            pose_with_id.pose = Pose()
+            pose_with_id.id = str(poses.id)
+            pose_with_id.pose.position.x = float(poses.pose.position.x)
+            pose_with_id.pose.position.y = float(poses.pose.position.y)
+            pose_with_id.pose.position.z = float(poses.pose.position.z)
+            pose_with_id_list.append(pose_with_id)
         return pose_with_id_list

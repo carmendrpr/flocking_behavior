@@ -41,7 +41,7 @@ import sys
 sys.path.append(os.path.dirname(__file__))  # noqa
 
 
-from as2_msgs.msg import YawMode
+from as2_msgs.msg import YawMode, PoseWithID
 from flocking_behavior import FlockingBehavior
 from as2_python_api.modules.module_base import ModuleBase
 from nav_msgs.msg import Path
@@ -61,6 +61,10 @@ class FlockingModule(ModuleBase, FlockingBehavior):
     def on_your_marks(self):
         """Go to initial poses."""
         self.go_to_init_poses()
+
+    def modify(self, new_pose: list[PoseWithID]):
+        """Modify the formation of the swarm."""
+        self.modify_poses(new_pose)
 
     def __call__(self, path: Path, speed: float,
                  yaw_mode: int = YawMode.KEEP_YAW,

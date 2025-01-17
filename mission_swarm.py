@@ -43,6 +43,7 @@ from as2_msgs.msg import YawMode
 from as2_msgs.msg import BehaviorStatus
 from as2_python_api.drone_interface import DroneInterface
 from as2_python_api.behavior_actions.behavior_handler import BehaviorHandler
+from as2_msgs.msg import PoseWithID
 
 
 class Drone(DroneInterface):
@@ -180,14 +181,25 @@ def main():
             swarm.on_your_marks()
 
             if confirm("Follow path"):
+
                 path = [[0, 0, 1], [1, 1, 1], [1, -1, 1], [-1, -1, 1], [-1, 1, 1]]
+
                 swarm.run(path, False)
+                # pose1 = PoseWithID()
+                # pose1.id = "/drone0"
+                # pose1.pose.position.x = 0.0
+                # pose1.pose.position.y = 3.0
+                # pose1.pose.position.z = 0.0
+                # new_poses = [pose1]
+                # # # new_poses = [['/drone0', [0, 3, 0]], ['/drone1', [0, -3, 0]]]
 
-                time.sleep(5)
-                swarm.drones[0].flocking.pause()
-
-                time.sleep(5)
-                swarm.drones[0].flocking.resume()
+                # time.sleep(3)
+                # swarm.modify(new_poses)
+                # # swarm.drones[0].flocking.pause()
+                # # # swarm.drones[0].flocking.modify(
+                # # #     path, 0.5, YawMode.KEEP_YAW, 0.0, new_poses, False, "earth")
+                # # time.sleep(2)
+                # # swarm.drones[0].flocking.resume()
 
         confirm("Land")
         swarm.land()

@@ -83,6 +83,7 @@ def drone_start(drone_interface: DroneInterface) -> bool:
 
 
 def drone_run(drone_interface: DroneInterface) -> bool:
+    import time
     """
     Run the mission for a single drone.
 
@@ -91,25 +92,47 @@ def drone_run(drone_interface: DroneInterface) -> bool:
     """
     print('Run mission')
 
-    # Go to path with keep yaw
-    for goal in PATH:
-        print(f'Go to with keep yaw {goal}')
-        success = drone_interface.go_to.go_to_point(goal, speed=SPEED)
-        print(f'Go to success: {success}')
-        if not success:
-            return success
-        print('Go to done')
-        sleep(SLEEP_TIME)
+    # # Go to path with keep yaw
+    # for goal in PATH:
+    # print(f'Go to with keep yaw {goal}')
+    # success = drone_interface.go_to.go_to_point(goal, speed=SPEED)
+    # time.sleep(20)
+    # drone_interface.go_to.pause()
+    # time.sleep(2)
+    #  drone_interface.go_to.resume()
+    #   print(f'Go to success: {success}')
+    #    if not success:
+    #         return success
+    #     print('Go to done')
+    #     sleep(SLEEP_TIME)
 
-    # Go to path facing
-    for goal in PATH:
-        print(f'Go to with path facing {goal}')
-        success = drone_interface.go_to.go_to_point_path_facing(goal, speed=SPEED)
-        print(f'Go to success: {success}')
-        if not success:
-            return success
-        print('Go to done')
-        sleep(SLEEP_TIME)
+    # # Go to path facing
+    # for goal in PATH:
+    #     print(f'Go to with path facing {goal}')
+    #     success = drone_interface.go_to.go_to_point_path_facing(goal, speed=SPEED)
+    #     print(f'Go to success: {success}')
+    #     if not success:
+    #         return success
+    #     print('Go to done')
+    #     sleep(SLEEP_TIME)
+    # print(f'Follow path')
+    # drone_interface.follow_path.follow_path_with_keep_yaw(PATH, SPEED, frame_id='earth')
+    # if drone_interface.follow_path.pause():
+    #     time.sleep(5)
+    #     if drone_interface.follow_path.resume():
+    #         time.sleep(5)
+    #         return True
+
+    success = drone_interface.follow_path.follow_path_with_keep_yaw(PATH, speed=SPEED)
+    time.sleep(2)
+    drone_interface.follow_path.pause()
+    time.sleep(2)
+    drone_interface.follow_path.resume()
+    print(f'Go to success: {success}')
+    if not success:
+        return success
+    print('Go to done')
+    sleep(SLEEP_TIME)
 
 
 def drone_end(drone_interface: DroneInterface) -> bool:

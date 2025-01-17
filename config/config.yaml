@@ -41,12 +41,12 @@
       # land_plugin_name: "land_plugin_trajectory"
   GoToBehavior:
     ros__parameters:
-      go_to_plugin_name: "go_to_plugin_position"
+      go_to_plugin_name: "go_to_plugin_trajectory"
       tf_timeout_threshold: 0.0
       # go_to_plugin_name: "go_to_plugin_trajectory"
   FollowPathBehavior:
     ros__parameters:
-      follow_path_plugin_name: "follow_path_plugin_position"
+      follow_path_plugin_name: "follow_path_plugin_trajectory"
       tf_timeout_threshold: 0.0
       # follow_path_plugin_name: "follow_path_plugin_trajectory"
   FollowReferenceBehavior:
