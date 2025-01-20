@@ -1,11 +1,3 @@
-/**:
-  platform:
-    ros__parameters: 
-      gps_origin: # GPS origin in latitude, longitude and altitude
-        latitude: 40.4405287 # Latitude GPS origin. Degrees
-        longitude: -3.6898277 # Longitude GPS origin. Degrees
-        altitude: 100.0 # Altitude GPS origin. Meters
-
 drone0:
   platform:
     ros__parameters: 
