@@ -151,7 +151,7 @@ def main():
 
     parser.add_argument('-n', '--namespaces',
                         type=list,
-                        default=['drone0', 'drone1'],
+                        default=['drone0', 'drone1', 'drone2'],
                         help='ID of the drone to be used in the mission')
     parser.add_argument('-v', '--verbose',
                         action='store_true',
@@ -182,8 +182,8 @@ def main():
 
             if confirm("Follow path"):
 
-                path = [[0, 0, 1], [1, 1, 1], [1, -1, 1], [-1, -1, 1], [-1, 1, 1]]
-
+                # path = [[0, 0, 1], [1, 1, 1], [1, -1, 1], [-1, -1, 1], [-1, 1, 1]]
+                path = [[15, 0, 1.5]]
                 swarm.run(path, False)
                 # pose1 = PoseWithID()
                 # pose1.id = "/drone0"
