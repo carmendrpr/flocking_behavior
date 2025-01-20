@@ -18,9 +18,6 @@
       plugin_name: "ground_truth"
       # # Indoor Raw Odometry
       # plugin_name: "raw_odometry"
-      # # Outdoor (GPS)
-      # use_gps: true
-      # set_origin_on_start: true
 
   # Motion Controller
   controller_manager:
@@ -55,12 +52,3 @@
       follow_reference_max_speed_y: 0.5
       follow_reference_max_speed_z: 0.5
       tf_timeout_threshold: 0.0
-
-  # Behaviors Perception
-  point_gimbal_behavior:
-    ros__parameters:
-      behavior_timeout: 10.0 # Timeout (s) for the action server
-      gimbal_name: gimbal # Name of the gimbal
-      gimbal_frame_id: gimbal # Name of the gimbal frame
-      gimbal_base_frame_id: gimbal_base # Name of the base frame of the gimbal
-      gimbal_threshold: 0.01 # Threshold for the gimbal angle
