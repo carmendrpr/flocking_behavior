@@ -8,7 +8,7 @@ drones_namespace_comma=$1
 IFS=',' read -r -a drone_namespaces <<< "$drones_namespace_comma"
 
 # Make a tmux list of sessions to be killed
-tmux_session_list=()
+tmux_session_list=("rosbag")
 
 # Add drones from user input
 for namespace in ${drone_namespaces[@]}; do
