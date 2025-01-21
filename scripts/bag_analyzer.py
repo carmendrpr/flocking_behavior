@@ -17,6 +17,7 @@ class LogData:
     filename: Path
     timestamps: list[float] = field(default_factory=list)
     poses: dict[str, list[tuple[float, float]]] = field(default_factory=dict)
+    twists: dict[str, list[tuple[float, float]]] = field(default_factory=dict)
 
     @classmethod
     def from_rosbag(cls, rosbag: Path) -> 'LogData':
@@ -27,12 +28,14 @@ class LogData:
             if "pose" in topic:
                 poses = deserialize_msgs(msgs, PointStamped)
                 drone_id = topic.split("/")[1]
-                ts0 = log_data.parse_timestamp(poses[drone_id].header)
+                ts0 = log_data.parse_timestamp(poses[0].header)
                 # Not common ts for all drones
                 log_data.timestamps = [log_data.parse_timestamp(
-                    header) - ts0 for header in poses[drone_id].header]
+                    pose.header) - ts0 for pose in poses]
                 log_data.poses[drone_id] = [(msg.point.x, msg.point.y)
                                             for msg in poses]
+            if "twist" in topic:
+                continue
             else:
                 print(f"Unknown topic: {topic}")
         return log_data
@@ -44,15 +47,20 @@ class LogData:
     def __str__(self):
         """Print stats"""
         text = f"{self.filename.stem}\n"
-        text += f"{self.timestamps[-1]:8.2f}s "
+        text += f"From {self.timestamps[0]:8.2f}s "
+        text += f"to {self.timestamps[-1]:8.2f}s "
+        text += f'{self.poses["drone0"][0]} '
+        text += f'{self.poses["drone0"][-1]}\n'
         return text
 
 
 def plot_path(data: LogData):
     """Plot paths"""
     fig, ax = plt.subplots()
-    # for k, v in data.paths.items():
-    #     ax.plot(data.timestamps, v, label=k)
+    for k, v in data.poses.items():
+        print(len(v))
+        print(len(v[0]))
+        ax.plot(data.timestamps, v, label=k)
     ax.set_title(f'Path length {data.filename.stem}')
     ax.set_xlabel('time (s)')
     ax.set_ylabel('path length (m)')
@@ -81,11 +89,11 @@ def main(log_file: str):
         # fig = plot_area(data, fig)
         # fig2 = plot_total_path(data, fig2)
 
-        # plot_path(data)
+        fig = plot_path(data)
         # print(data.stats(25.0))
     plt.show()
 
 
 if __name__ == "__main__":
-    main('rosbags/')
+    main('rosbag/test1')
     # main('rosbags/exploration_20231129_140425')
