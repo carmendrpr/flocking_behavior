@@ -95,11 +95,11 @@ class BagRecorder(Node):
             self.get_logger().error(f"Extrapolation error: {e}")
 
         # Drone reference poses
-        # ref_pose = PoseStamped()
-        # ref_pose.header = msg.header
-        # ref_pose.header.frame_id = f"Swarm/{drone_id}_ref"
-        # ref_pose_in_earth = self.buffer.transform(ref_pose, "earth")
-        # self.last_ref_poses[drone_id] = ref_pose_in_earth
+        ref_pose = PoseStamped()
+        ref_pose.header = msg.header
+        ref_pose.header.frame_id = f"Swarm/{drone_id}_ref"
+        ref_pose_in_earth = self.buffer.transform(ref_pose, "earth")
+        self.last_ref_poses[drone_id] = ref_pose_in_earth
 
     def twist_cbk(self, msg: TwistStamped, drone_id: str) -> None:
         """Callback for twist"""
