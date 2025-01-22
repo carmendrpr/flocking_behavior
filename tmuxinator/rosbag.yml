@@ -21,6 +21,7 @@ windows:
             - ros2 bag record --include-hidden-topics -o ./rosbags/<%= rosbag_name %>
                 /tf
                 /tf_static
+                /Swarm/debug/traj_generated
             <%- drones.split(',').each do |drone| %>
                 /<%= drone %>/platform/info
                 /<%= drone %>/self_localization/pose

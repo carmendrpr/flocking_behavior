@@ -36,9 +36,6 @@ windows:
             config_file:=config/config.yaml
             plugin_name:=<%= motion_controller_plugin %>
             plugin_config_file:=config/<%= motion_controller_plugin %>.yaml
-        - ros2 launch as2_behaviors_trajectory_generation generate_polynomial_trajectory_behavior_launch.py
-            namespace:=<%= drone_namespace %>
-            config_file:=config/config.yaml
 
   # Behaviors
   - behaviors:

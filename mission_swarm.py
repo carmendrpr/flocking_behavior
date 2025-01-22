@@ -172,37 +172,23 @@ def main():
         drones_namespace,
         verbose=verbosity,
         use_sim_time=use_sim_time)
+    time.sleep(2)
+    # if confirm("Takeoff"):
+    swarm.get_ready()
+    swarm.takeoff()
+    time.sleep(2)
 
-    if confirm("Takeoff"):
-        swarm.get_ready()
-        swarm.takeoff()
+    # if confirm("Go to"):
+    swarm.on_your_marks()
+    time.sleep(2)
+    # if confirm("Follow path"):
 
-        if confirm("Go to"):
-            swarm.on_your_marks()
+    path = [[15, 0, 1.5]]
+    swarm.run(path, False)
 
-            if confirm("Follow path"):
-
-                # path = [[0, 0, 1], [1, 1, 1], [1, -1, 1], [-1, -1, 1], [-1, 1, 1]]
-                path = [[15, 0, 1.5]]
-                swarm.run(path, False)
-                # pose1 = PoseWithID()
-                # pose1.id = "/drone0"
-                # pose1.pose.position.x = 0.0
-                # pose1.pose.position.y = 3.0
-                # pose1.pose.position.z = 0.0
-                # new_poses = [pose1]
-                # # # new_poses = [['/drone0', [0, 3, 0]], ['/drone1', [0, -3, 0]]]
-
-                # time.sleep(3)
-                # swarm.modify(new_poses)
-                # # swarm.drones[0].flocking.pause()
-                # # # swarm.drones[0].flocking.modify(
-                # # #     path, 0.5, YawMode.KEEP_YAW, 0.0, new_poses, False, "earth")
-                # # time.sleep(2)
-                # # swarm.drones[0].flocking.resume()
-
-        confirm("Land")
-        swarm.land()
+    time.sleep(70)
+    # confirm("Land")
+    swarm.land()
 
     print("Shutdown")
     swarm.shutdown()
