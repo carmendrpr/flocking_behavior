@@ -2,6 +2,7 @@
 
 usage() {
     echo "  options:"
+    echo "      -r: record rosbag"
     echo "      -c: motion controller plugin (pid_speed_controller, differential_flatness_controller), choices: [pid, df]. Default: pid"
     echo "      -m: multi agent. Default not set"
     echo "      -n: select drones namespace to launch, values are comma separated. By default, it will get all drones from world description file"
@@ -15,8 +16,11 @@ drones_namespace_comma=""
 use_gnome="false"
 
 # Arg parser
-while getopts "cmn:g" opt; do
+while getopts "rcmn:g" opt; do
   case ${opt} in
+    r )
+      record_rosbag="true"
+      ;;
     c )
       motion_controller_plugin="${OPTARG}"
       ;;
@@ -46,6 +50,9 @@ done
 
 # HOW TO INCLUDE MODULES FROM THE PROJECT
 export AS2_MODULES_PATH=$AS2_MODULES_PATH:$(pwd)/as2_python_api_modules
+
+## DEFAULTS
+record_rosbag=${record_rosbag:="false"}
 
 # Set simulation world description config file
 if [[ ${swarm} == "true" ]]; then
@@ -100,6 +107,12 @@ for namespace in ${drone_namespaces[@]}; do
 
   sleep 0.1 # Wait for tmuxinator to finish
 done
+
+if [[ ${record_rosbag} == "true" ]]; then
+    tmuxinator start -p tmuxinator/rosbag.yml \
+        drones=${drones_namespace_comma} &
+    wait
+fi
 
 # Attach to tmux session
 if [[ ${use_gnome} == "false" ]]; then
