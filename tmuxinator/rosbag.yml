@@ -15,21 +15,22 @@ root: ./
 on_project_start: mkdir rosbags 2>/dev/null
 startup_window: rosbag
 windows:
-  - rosbag:
-      layout:
-      panes:
-        - ros2 bag record --include-hidden-topics -o ./rosbags/<%= rosbag_name %>
-            /tf
-            /tf_static
-        <%- drones.split(',').each do |drone| %>
-            /<%= drone %>/platform/info
-            /<%= drone %>/self_localization/pose
-            /<%= drone %>/self_localization/twist
-            /<%= drone %>/sensor_measurements/odom
-            /<%= drone %>/traj_gen/yaw
-            /<%= drone %>/debug/ref_traj_point
-            /<%= drone %>/debug/ref_traj_point_array
-            /<%= drone %>/debug/traj_generated
-            /<%= drone %>/ground_truth/pose
-            /<%= drone %>/ground_truth/twist
-        <%- end %>
+    - rosbag:
+        layout:
+        panes:
+            - ros2 bag record --include-hidden-topics -o ./rosbags/<%= rosbag_name %>
+                /tf
+                /tf_static
+            <%- drones.split(',').each do |drone| %>
+                /<%= drone %>/platform/info
+                /<%= drone %>/self_localization/pose
+                /<%= drone %>/self_localization/twist
+                /<%= drone %>/sensor_measurements/odom
+                /<%= drone %>/traj_gen/yaw
+                /<%= drone %>/debug/ref_traj_point
+                /<%= drone %>/debug/ref_traj_point_array
+                /<%= drone %>/debug/traj_generated
+                /<%= drone %>/ground_truth/pose
+                /<%= drone %>/ground_truth/twist
+            <%- end %>
+            - python scripts/bag_recorder.py -s <%= drones %>
