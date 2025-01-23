@@ -5,6 +5,8 @@ bag_reader.py
 from typing import Any
 from rclpy.serialization import deserialize_message
 from rosbag2_py import SequentialReader, StorageOptions, ConverterOptions
+from tf2_msgs.msg import TFMessage
+from tf2_ros.buffer import Buffer
 
 
 def read_rosbag(filename: str) -> dict[str, list[Any]]:
@@ -22,6 +24,15 @@ def read_rosbag(filename: str) -> dict[str, list[Any]]:
             topics_dict[topic] = []
         topics_dict[topic].append(msg)
     return topics_dict
+
+
+def deserialize_tfs(tfs: list[TFMessage], buffer: Buffer) -> Buffer:
+    """Deserialize TF messages"""
+    for tf in tfs:
+        tf_message: TFMessage = deserialize_message(tf, TFMessage)
+        for transform in tf_message.transforms:
+            buffer.set_transform(transform, 'default_authority')
+    return buffer
 
 
 def deserialize_msgs(msgs: list[Any], msg_type: Any) -> list[Any]:
