@@ -57,6 +57,7 @@ class LogData:
     centroid_poses: list[PoseStamped] = field(default_factory=list)
     centroid_twists: list[TwistStamped] = field(default_factory=list)
     ref_poses: dict[str, list[PoseStamped]] = field(default_factory=dict)
+    twists_in_swarm: dict[str, list[TwistStamped]] = field(default_factory=dict)
     traj: list[PoseStamped] = field(default_factory=list)
 
     @ classmethod
@@ -84,12 +85,14 @@ class LogData:
                 drone_id = topic.split("/")[1]
                 log_data.poses[drone_id] = []
                 log_data.ref_poses[drone_id] = []
+                log_data.twists_in_swarm[drone_id] = []
+                poses_in_swarm = []  # aux
 
                 for pose in poses:
                     log_data.poses[drone_id].append(pose)
 
                     centroid = PoseStamped()
-                    centroid.header = pose.header
+                    centroid.header.stamp = pose.header.stamp
                     centroid.header.frame_id = 'Swarm/Swarm'
                     if buffer.can_transform('earth', 'Swarm/Swarm', pose.header.stamp):
                         centroid_in_earth = buffer.transform(centroid, 'earth')
@@ -102,6 +105,12 @@ class LogData:
                         ref_pose = tf2_geometry_msgs.do_transform_pose_stamped(
                             centroid_in_earth, tf_static[f'Swarm/Swarm_Swarm/{drone_id}_ref'])
                         log_data.ref_poses[drone_id].append(ref_pose)
+
+                    if buffer.can_transform('Swarm/Swarm', pose.header.frame_id, pose.header.stamp):
+                        pose_in_swarm = buffer.transform(pose, 'Swarm/Swarm')
+                        poses_in_swarm.append(pose_in_swarm)
+                        log_data.twists_in_swarm[drone_id].append(derivate_pose(
+                            poses_in_swarm, log_data.twists_in_swarm[drone_id], 0.01))
             elif "self_localization/twist" in topic:
                 drone_id = topic.split("/")[1]
                 log_data.twists[drone_id] = deserialize_msgs(msgs, TwistStamped)
@@ -133,10 +142,10 @@ def plot_path(data: LogData):
         y = [pose.pose.position.y for pose in poses]
         ax.plot(x, y, label=drone)
 
-    for drone, ref_poses in zip(data.ref_poses.keys(), data.ref_poses.values()):
-        x = [pose.pose.position.x for pose in ref_poses]
-        y = [pose.pose.position.y for pose in ref_poses]
-        ax.plot(x, y, label=f'{drone}_ref')
+    # for drone, ref_poses in zip(data.ref_poses.keys(), data.ref_poses.values()):
+    #     x = [pose.pose.position.x for pose in ref_poses]
+    #     y = [pose.pose.position.y for pose in ref_poses]
+    #     ax.plot(x, y, label=f'{drone}_ref')
 
     x = [pose.pose.position.x for pose in data.centroid_poses]
     y = [pose.pose.position.y for pose in data.centroid_poses]
@@ -148,6 +157,23 @@ def plot_path(data: LogData):
     ax.legend()
     ax.grid()
     fig.savefig(f"/tmp/path_{data.filename.stem}.png")
+    return fig
+
+
+def plot_x(data: LogData):
+    fig, ax = plt.subplots()
+    for drone, poses in zip(data.poses.keys(), data.poses.values()):
+        x = [pose.pose.position.x for pose in poses]
+        ts = [timestamp_to_float(pose.header) - timestamp_to_float(poses[0].header)
+              for pose in poses]
+        ax.plot(ts, x, label=drone)
+
+    ax.set_title(f'X {data.filename.stem}')
+    ax.set_xlabel('time (s)')
+    ax.set_ylabel('x (m)')
+    ax.legend()
+    ax.grid()
+    fig.savefig(f"/tmp/x_{data.filename.stem}.png")
     return fig
 
 
@@ -176,6 +202,31 @@ def plot_twist(data: LogData):
     return fig
 
 
+def plot_twist_in_swarm(data: LogData):
+    """Plot twists"""
+    fig, ax = plt.subplots()
+    for drone, twists in zip(data.twists_in_swarm.keys(), data.twists_in_swarm.values()):
+        sp = [sqrt(twist.twist.linear.x**2 + twist.twist.linear.y ** 2 + twist.twist.angular.z**2)
+              for twist in twists]
+        ts = [timestamp_to_float(twist.header) - timestamp_to_float(twists[0].header)
+              for twist in twists]
+        ax.plot(ts, sp, label=drone)
+
+    sp = [sqrt(twist.twist.linear.x**2 + twist.twist.linear.y ** 2 + twist.twist.angular.z**2)
+          for twist in data.centroid_twists]
+    ts = [timestamp_to_float(twist.header) - timestamp_to_float(data.centroid_twists[0].header)
+          for twist in data.centroid_twists]
+    ax.plot(ts, sp, label='centroid')
+
+    ax.set_title(f'Twists {data.filename.stem}')
+    ax.set_xlabel('time (s)')
+    ax.set_ylabel('twist (m/s)')
+    ax.legend()
+    ax.grid()
+    fig.savefig(f"/tmp/twist_in_swarm_{data.filename.stem}.png")
+    return fig
+
+
 def main(log_file: str):
     """Main function"""
     if Path(log_file).is_dir():
@@ -197,10 +248,14 @@ def main(log_file: str):
 
         fig = plot_path(data)
         fig2 = plot_twist(data)
+        plot_x(data)
+        plot_twist_in_swarm(data)
         # print(data.stats(25.0))
         plt.show()
 
 
 if __name__ == "__main__":
-    main('rosbags/test2')
+    # main('rosbags/test2')
     # main('rosbags/Experimentos/Lineal_Vel_1/')
+    main('rosbags/Experimentos/Curva_Vel_05/rosbag2_2025_01_23-12_26_16/')
+    # main('rosbags/Experimentos/Curva_Vel_05/rosbag2_2025_01_23-12_23_57/')
