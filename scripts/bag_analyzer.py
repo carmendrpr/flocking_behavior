@@ -18,6 +18,7 @@ from bag_reader import read_rosbag, deserialize_msgs, deserialize_tfs
 
 
 Point3D = tuple[float, float, float]
+MyTwist = tuple[float, float, float, float]
 
 
 @dataclass
@@ -26,11 +27,13 @@ class LogData:
     filename: Path
     timestamps: list[float] = field(default_factory=list)
     poses: dict[str, list[Point3D]] = field(default_factory=dict)
-    twists: dict[str, list[tuple[float, float, float, float]]] = field(default_factory=dict)
+    twists: dict[str, list[MyTwist]] = field(default_factory=dict)
     centroid_poses: list[Point3D] = field(default_factory=list)
+    centroid_twists: list[MyTwist] = field(default_factory=list)
     ref_poses: dict[str, list[Point3D]] = field(default_factory=dict)
+    traj: list[Point3D] = field(default_factory=list)
 
-    @classmethod
+    @ classmethod
     def from_rosbag(cls, rosbag: Path) -> 'LogData':
         """Read the rosbag"""
         log_data = cls(rosbag)
@@ -57,6 +60,7 @@ class LogData:
                 log_data.ref_poses[drone_id] = []
                 ts0 = log_data.parse_timestamp(poses[0].header)
 
+                prev_pose, prev_twist = None, None
                 for pose in poses:
                     log_data.poses[drone_id].append((pose.point.x, pose.point.y, pose.point.z))
 
@@ -70,6 +74,10 @@ class LogData:
                             log_data.centroid_poses.append((centroid_in_earth.pose.position.x,
                                                             centroid_in_earth.pose.position.y,
                                                             centroid_in_earth.pose.position.z))
+                            tw = log_data.calc_twist(
+                                prev_pose, centroid_in_earth, prev_twist, 0.01)
+                            log_data.centroid_twists.append(tw)
+                            prev_pose, prev_twist = centroid_in_earth, tw
 
                         # do static transform manually
                         ref_pose = tf2_geometry_msgs.do_transform_pose(
@@ -90,12 +98,32 @@ class LogData:
                 continue
             elif '/tf_static' == topic:
                 continue
+            elif '/Swarm/debug/traj_generated' == topic:
+                traj = deserialize_msgs(msgs, PoseStamped)
+                for pose in traj:
+                    log_data.traj.append(
+                        (pose.pose.position.x, pose.pose.position.y, pose.pose.position.z))
             else:
                 print(f"Unknown topic: {topic}")
                 continue
             print(f'Processed {topic}')
 
         return log_data
+
+    def calc_twist(self, ps0: PoseStamped, ps1: PoseStamped, vs0: MyTwist, alpha: float,
+                   epsilon: float = 0.00001) -> MyTwist:
+        """Calculate twist"""
+        if not ps0 or not ps1:
+            return 0.0, 0.0, 0.0, 0.0
+        dt = self.parse_timestamp(ps1.header) - self.parse_timestamp(ps0.header)
+        dt = dt if dt > epsilon else epsilon
+        dx = ps1.pose.position.x - ps0.pose.position.x
+        dy = ps1.pose.position.y - ps0.pose.position.y
+        dz = ps1.pose.position.z - ps0.pose.position.z
+        vx = alpha * dx / dt + (1.0 - alpha) * vs0[1]
+        vy = alpha * dy / dt + (1.0 - alpha) * vs0[2]
+        vz = alpha * dz / dt + (1.0 - alpha) * vs0[3]
+        return sqrt(vx**2 + vy**2 + vz**2), vx, vy, vz
 
     def parse_timestamp(self, header: Header) -> float:
         """Parse timestamp from header"""
@@ -141,6 +169,10 @@ def plot_twist(data: LogData):
         sp, x, y, z = zip(*twists)
         max_len = min(len(data.timestamps), len(sp))
         ax.plot(data.timestamps[:max_len], sp[:max_len], label=drone)
+
+    sp, x, y, z = zip(*data.centroid_twists)
+    max_len = min(len(data.timestamps), len(sp))
+    ax.plot(data.timestamps[:max_len], sp[:max_len], label='centroid')
 
     ax.set_title(f'Twists {data.filename.stem}')
     ax.set_xlabel('time (s)')
