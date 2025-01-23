@@ -17,15 +17,18 @@ import tf2_geometry_msgs
 from bag_reader import read_rosbag, deserialize_msgs, deserialize_tfs
 
 
+Point3D = tuple[float, float, float]
+
+
 @dataclass
 class LogData:
     """Data read from rosbag file"""
     filename: Path
     timestamps: list[float] = field(default_factory=list)
-    poses: dict[str, list[tuple[float, float]]] = field(default_factory=dict)
+    poses: dict[str, list[Point3D]] = field(default_factory=dict)
     twists: dict[str, list[tuple[float, float, float, float]]] = field(default_factory=dict)
-    centroid_poses: list[tuple[float, float]] = field(default_factory=list)
-    ref_poses: dict[str, list[tuple[float, float]]] = field(default_factory=dict)
+    centroid_poses: list[Point3D] = field(default_factory=list)
+    ref_poses: dict[str, list[Point3D]] = field(default_factory=dict)
 
     @classmethod
     def from_rosbag(cls, rosbag: Path) -> 'LogData':
@@ -55,7 +58,7 @@ class LogData:
                 ts0 = log_data.parse_timestamp(poses[0].header)
 
                 for pose in poses:
-                    log_data.poses[drone_id].append((pose.point.x, pose.point.y))
+                    log_data.poses[drone_id].append((pose.point.x, pose.point.y, pose.point.z))
 
                     centroid = PoseStamped()
                     centroid.header = pose.header
@@ -65,13 +68,15 @@ class LogData:
                         if drone_id == "drone0":
                             log_data.timestamps.append(log_data.parse_timestamp(pose.header) - ts0)
                             log_data.centroid_poses.append((centroid_in_earth.pose.position.x,
-                                                            centroid_in_earth.pose.position.y))
+                                                            centroid_in_earth.pose.position.y,
+                                                            centroid_in_earth.pose.position.z))
 
                         # do static transform manually
                         ref_pose = tf2_geometry_msgs.do_transform_pose(
                             centroid_in_earth.pose, tf_static[f'Swarm/Swarm_Swarm/{drone_id}_ref'])
                         log_data.ref_poses[drone_id].append((ref_pose.position.x,
-                                                            ref_pose.position.y))
+                                                            ref_pose.position.y,
+                                                            ref_pose.position.z))
             elif "self_localization/twist" in topic:
                 twists = deserialize_msgs(msgs, TwistStamped)
                 drone_id = topic.split("/")[1]
@@ -110,14 +115,14 @@ def plot_path(data: LogData):
     """Plot paths"""
     fig, ax = plt.subplots()
     for drone, poses in zip(data.poses.keys(), data.poses.values()):
-        x, y = zip(*poses)
+        x, y, z = zip(*poses)
         ax.plot(x, y, label=drone)
 
     for drone, ref_poses in zip(data.ref_poses.keys(), data.ref_poses.values()):
-        x, y = zip(*ref_poses)
+        x, y, z = zip(*ref_poses)
         ax.plot(x, y, label=f'{drone}_ref')
 
-    x, y = zip(*data.centroid_poses)
+    x, y, z = zip(*data.centroid_poses)
     ax.plot(x, y, label='centroid')
 
     ax.set_title(f'Path {data.filename.stem}')
@@ -172,5 +177,5 @@ def main(log_file: str):
 
 
 if __name__ == "__main__":
-    # main('rosbags/test2')
-    main('rosbags/Experimentos/Lineal_Vel_1/')
+    main('rosbags/test2')
+    # main('rosbags/Experimentos/Lineal_Vel_1/')
