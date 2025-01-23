@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 
 from rclpy.time import Duration
 from tf2_ros.buffer import Buffer
-from geometry_msgs.msg import PointStamped, PoseStamped, TransformStamped, TwistStamped
+from geometry_msgs.msg import PoseStamped, TransformStamped, TwistStamped
 from std_msgs.msg import Header
 from tf2_msgs.msg import TFMessage
 import tf2_geometry_msgs
@@ -17,21 +17,17 @@ import tf2_geometry_msgs
 from bag_reader import read_rosbag, deserialize_msgs, deserialize_tfs
 
 
-Point3D = tuple[float, float, float]
-MyTwist = tuple[float, float, float, float]
-
-
 @dataclass
 class LogData:
     """Data read from rosbag file"""
     filename: Path
     timestamps: list[float] = field(default_factory=list)
-    poses: dict[str, list[Point3D]] = field(default_factory=dict)
-    twists: dict[str, list[MyTwist]] = field(default_factory=dict)
-    centroid_poses: list[Point3D] = field(default_factory=list)
-    centroid_twists: list[MyTwist] = field(default_factory=list)
-    ref_poses: dict[str, list[Point3D]] = field(default_factory=dict)
-    traj: list[Point3D] = field(default_factory=list)
+    poses: dict[str, list[PoseStamped]] = field(default_factory=dict)
+    twists: dict[str, list[TwistStamped]] = field(default_factory=dict)
+    centroid_poses: list[PoseStamped] = field(default_factory=list)
+    centroid_twists: list[TwistStamped] = field(default_factory=list)
+    ref_poses: dict[str, list[PoseStamped]] = field(default_factory=dict)
+    traj: list[PoseStamped] = field(default_factory=list)
 
     @ classmethod
     def from_rosbag(cls, rosbag: Path) -> 'LogData':
@@ -54,15 +50,14 @@ class LogData:
 
         for topic, msgs in rosbag_msgs.items():
             if "self_localization/pose" in topic:
-                poses = deserialize_msgs(msgs, PointStamped)
+                poses = deserialize_msgs(msgs, PoseStamped)
                 drone_id = topic.split("/")[1]
                 log_data.poses[drone_id] = []
                 log_data.ref_poses[drone_id] = []
                 ts0 = log_data.parse_timestamp(poses[0].header)
 
-                prev_pose, prev_twist = None, None
                 for pose in poses:
-                    log_data.poses[drone_id].append((pose.point.x, pose.point.y, pose.point.z))
+                    log_data.poses[drone_id].append(pose)
 
                     centroid = PoseStamped()
                     centroid.header = pose.header
@@ -71,38 +66,23 @@ class LogData:
                         centroid_in_earth = buffer.transform(centroid, 'earth')
                         if drone_id == "drone0":
                             log_data.timestamps.append(log_data.parse_timestamp(pose.header) - ts0)
-                            log_data.centroid_poses.append((centroid_in_earth.pose.position.x,
-                                                            centroid_in_earth.pose.position.y,
-                                                            centroid_in_earth.pose.position.z))
-                            tw = log_data.calc_twist(
-                                prev_pose, centroid_in_earth, prev_twist, 0.01)
-                            log_data.centroid_twists.append(tw)
-                            prev_pose, prev_twist = centroid_in_earth, tw
+                            log_data.centroid_poses.append(centroid_in_earth)
+                            log_data.centroid_twists.append(log_data.derivate_pose(
+                                log_data.centroid_poses, log_data.centroid_twists, 0.01))
 
                         # do static transform manually
-                        ref_pose = tf2_geometry_msgs.do_transform_pose(
-                            centroid_in_earth.pose, tf_static[f'Swarm/Swarm_Swarm/{drone_id}_ref'])
-                        log_data.ref_poses[drone_id].append((ref_pose.position.x,
-                                                            ref_pose.position.y,
-                                                            ref_pose.position.z))
+                        ref_pose = tf2_geometry_msgs.do_transform_pose_stamped(
+                            centroid_in_earth, tf_static[f'Swarm/Swarm_Swarm/{drone_id}_ref'])
+                        log_data.ref_poses[drone_id].append(ref_pose)
             elif "self_localization/twist" in topic:
-                twists = deserialize_msgs(msgs, TwistStamped)
                 drone_id = topic.split("/")[1]
-                log_data.twists[drone_id] = []
-                for twist in twists:
-                    speed = sqrt(twist.twist.linear.x**2 + twist.twist.linear.y **
-                                 2 + twist.twist.angular.z**2)
-                    log_data.twists[drone_id].append(
-                        (speed, twist.twist.linear.x, twist.twist.linear.y, twist.twist.angular.z))
+                log_data.twists[drone_id] = deserialize_msgs(msgs, TwistStamped)
             elif "/tf" == topic:
                 continue
             elif '/tf_static' == topic:
                 continue
             elif '/Swarm/debug/traj_generated' == topic:
-                traj = deserialize_msgs(msgs, PoseStamped)
-                for pose in traj:
-                    log_data.traj.append(
-                        (pose.pose.position.x, pose.pose.position.y, pose.pose.position.z))
+                log_data.traj = deserialize_msgs(msgs, PoseStamped)
             else:
                 print(f"Unknown topic: {topic}")
                 continue
@@ -110,20 +90,30 @@ class LogData:
 
         return log_data
 
-    def calc_twist(self, ps0: PoseStamped, ps1: PoseStamped, vs0: MyTwist, alpha: float,
-                   epsilon: float = 0.00001) -> MyTwist:
-        """Calculate twist"""
+    def derivate_pose(self, ps_history: list[PoseStamped], tws_history: list[TwistStamped],
+                      alpha: float, epsilon: float = 0.00001) -> TwistStamped:
+        """Calculate twist from pose discrete derivation"""
+        ps0 = ps_history[-2] if len(ps_history) > 1 else None
+        ps1 = ps_history[-1] if len(ps_history) > 0 else None
+        tws0 = tws_history[-1] if len(tws_history) > 0 else None
         if not ps0 or not ps1:
-            return 0.0, 0.0, 0.0, 0.0
+            tw = TwistStamped()
+            tw.header.stamp = ps1.header.stamp
+            tw.header.frame_id = 'Swarm/Swarm'
+            return tw
         dt = self.parse_timestamp(ps1.header) - self.parse_timestamp(ps0.header)
         dt = dt if dt > epsilon else epsilon
         dx = ps1.pose.position.x - ps0.pose.position.x
         dy = ps1.pose.position.y - ps0.pose.position.y
         dz = ps1.pose.position.z - ps0.pose.position.z
-        vx = alpha * dx / dt + (1.0 - alpha) * vs0[1]
-        vy = alpha * dy / dt + (1.0 - alpha) * vs0[2]
-        vz = alpha * dz / dt + (1.0 - alpha) * vs0[3]
-        return sqrt(vx**2 + vy**2 + vz**2), vx, vy, vz
+        tws1 = TwistStamped()
+        tws1.header.stamp = ps1.header.stamp
+        tws1.header.frame_id = tws0.header.frame_id
+        # smooth filtering
+        tws1.twist.linear.x = alpha * dx / dt + (1.0 - alpha) * tws0.twist.linear.x
+        tws1.twist.linear.y = alpha * dy / dt + (1.0 - alpha) * tws0.twist.linear.y
+        tws1.twist.linear.z = alpha * dz / dt + (1.0 - alpha) * tws0.twist.linear.z
+        return tws1
 
     def parse_timestamp(self, header: Header) -> float:
         """Parse timestamp from header"""
@@ -133,9 +123,7 @@ class LogData:
         """Print stats"""
         text = f"{self.filename.stem}\n"
         text += f"From {self.timestamps[0]:8.2f}s "
-        text += f"to {self.timestamps[-1]:8.2f}s "
-        text += f'{self.poses["drone0"][0]} '
-        text += f'{self.poses["drone0"][-1]}\n'
+        text += f"to {self.timestamps[-1]:8.2f}s\n"
         return text
 
 
@@ -143,14 +131,18 @@ def plot_path(data: LogData):
     """Plot paths"""
     fig, ax = plt.subplots()
     for drone, poses in zip(data.poses.keys(), data.poses.values()):
-        x, y, z = zip(*poses)
+        # https://stackoverflow.com/questions/52773215
+        x = [pose.pose.position.x for pose in poses]
+        y = [pose.pose.position.y for pose in poses]
         ax.plot(x, y, label=drone)
 
     for drone, ref_poses in zip(data.ref_poses.keys(), data.ref_poses.values()):
-        x, y, z = zip(*ref_poses)
+        x = [pose.pose.position.x for pose in ref_poses]
+        y = [pose.pose.position.y for pose in ref_poses]
         ax.plot(x, y, label=f'{drone}_ref')
 
-    x, y, z = zip(*data.centroid_poses)
+    x = [pose.pose.position.x for pose in data.centroid_poses]
+    y = [pose.pose.position.y for pose in data.centroid_poses]
     ax.plot(x, y, label='centroid')
 
     ax.set_title(f'Path {data.filename.stem}')
@@ -166,11 +158,13 @@ def plot_twist(data: LogData):
     """Plot twists"""
     fig, ax = plt.subplots()
     for drone, twists in zip(data.twists.keys(), data.twists.values()):
-        sp, x, y, z = zip(*twists)
+        sp = [sqrt(twist.twist.linear.x**2 + twist.twist.linear.y ** 2 + twist.twist.angular.z**2)
+              for twist in twists]
         max_len = min(len(data.timestamps), len(sp))
         ax.plot(data.timestamps[:max_len], sp[:max_len], label=drone)
 
-    sp, x, y, z = zip(*data.centroid_twists)
+    sp = [sqrt(twist.twist.linear.x**2 + twist.twist.linear.y ** 2 + twist.twist.angular.z**2)
+          for twist in data.centroid_twists]
     max_len = min(len(data.timestamps), len(sp))
     ax.plot(data.timestamps[:max_len], sp[:max_len], label='centroid')
 
