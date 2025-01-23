@@ -17,11 +17,41 @@ import tf2_geometry_msgs
 from bag_reader import read_rosbag, deserialize_msgs, deserialize_tfs
 
 
+def timestamp_to_float(header: Header) -> float:
+    """Parse timestamp from header and convert float"""
+    return header.stamp.sec + header.stamp.nanosec * 1e-9
+
+
+def derivate_pose(ps_history: list[PoseStamped], tws_history: list[TwistStamped],
+                  alpha: float, epsilon: float = 0.00001) -> TwistStamped:
+    """Calculate twist from pose discrete derivation"""
+    ps0 = ps_history[-2] if len(ps_history) > 1 else None
+    ps1 = ps_history[-1] if len(ps_history) > 0 else None
+    tws0 = tws_history[-1] if len(tws_history) > 0 else None
+    if not ps0 or not ps1:
+        tw = TwistStamped()
+        tw.header.stamp = ps1.header.stamp
+        tw.header.frame_id = 'Swarm/Swarm'
+        return tw
+    dt = timestamp_to_float(ps1.header) - timestamp_to_float(ps0.header)
+    dt = dt if dt > epsilon else epsilon
+    dx = ps1.pose.position.x - ps0.pose.position.x
+    dy = ps1.pose.position.y - ps0.pose.position.y
+    dz = ps1.pose.position.z - ps0.pose.position.z
+    tws1 = TwistStamped()
+    tws1.header.stamp = ps1.header.stamp
+    tws1.header.frame_id = tws0.header.frame_id
+    # smooth filtering
+    tws1.twist.linear.x = alpha * dx / dt + (1.0 - alpha) * tws0.twist.linear.x
+    tws1.twist.linear.y = alpha * dy / dt + (1.0 - alpha) * tws0.twist.linear.y
+    tws1.twist.linear.z = alpha * dz / dt + (1.0 - alpha) * tws0.twist.linear.z
+    return tws1
+
+
 @dataclass
 class LogData:
     """Data read from rosbag file"""
     filename: Path
-    timestamps: list[float] = field(default_factory=list)
     poses: dict[str, list[PoseStamped]] = field(default_factory=dict)
     twists: dict[str, list[TwistStamped]] = field(default_factory=dict)
     centroid_poses: list[PoseStamped] = field(default_factory=list)
@@ -54,7 +84,6 @@ class LogData:
                 drone_id = topic.split("/")[1]
                 log_data.poses[drone_id] = []
                 log_data.ref_poses[drone_id] = []
-                ts0 = log_data.parse_timestamp(poses[0].header)
 
                 for pose in poses:
                     log_data.poses[drone_id].append(pose)
@@ -65,9 +94,8 @@ class LogData:
                     if buffer.can_transform('earth', 'Swarm/Swarm', pose.header.stamp):
                         centroid_in_earth = buffer.transform(centroid, 'earth')
                         if drone_id == "drone0":
-                            log_data.timestamps.append(log_data.parse_timestamp(pose.header) - ts0)
                             log_data.centroid_poses.append(centroid_in_earth)
-                            log_data.centroid_twists.append(log_data.derivate_pose(
+                            log_data.centroid_twists.append(derivate_pose(
                                 log_data.centroid_poses, log_data.centroid_twists, 0.01))
 
                         # do static transform manually
@@ -84,46 +112,15 @@ class LogData:
             elif '/Swarm/debug/traj_generated' == topic:
                 log_data.traj = deserialize_msgs(msgs, PoseStamped)
             else:
-                print(f"Unknown topic: {topic}")
+                print(f"Ignored topic: {topic}")
                 continue
             print(f'Processed {topic}')
 
         return log_data
 
-    def derivate_pose(self, ps_history: list[PoseStamped], tws_history: list[TwistStamped],
-                      alpha: float, epsilon: float = 0.00001) -> TwistStamped:
-        """Calculate twist from pose discrete derivation"""
-        ps0 = ps_history[-2] if len(ps_history) > 1 else None
-        ps1 = ps_history[-1] if len(ps_history) > 0 else None
-        tws0 = tws_history[-1] if len(tws_history) > 0 else None
-        if not ps0 or not ps1:
-            tw = TwistStamped()
-            tw.header.stamp = ps1.header.stamp
-            tw.header.frame_id = 'Swarm/Swarm'
-            return tw
-        dt = self.parse_timestamp(ps1.header) - self.parse_timestamp(ps0.header)
-        dt = dt if dt > epsilon else epsilon
-        dx = ps1.pose.position.x - ps0.pose.position.x
-        dy = ps1.pose.position.y - ps0.pose.position.y
-        dz = ps1.pose.position.z - ps0.pose.position.z
-        tws1 = TwistStamped()
-        tws1.header.stamp = ps1.header.stamp
-        tws1.header.frame_id = tws0.header.frame_id
-        # smooth filtering
-        tws1.twist.linear.x = alpha * dx / dt + (1.0 - alpha) * tws0.twist.linear.x
-        tws1.twist.linear.y = alpha * dy / dt + (1.0 - alpha) * tws0.twist.linear.y
-        tws1.twist.linear.z = alpha * dz / dt + (1.0 - alpha) * tws0.twist.linear.z
-        return tws1
-
-    def parse_timestamp(self, header: Header) -> float:
-        """Parse timestamp from header"""
-        return header.stamp.sec + header.stamp.nanosec * 1e-9
-
     def __str__(self):
         """Print stats"""
         text = f"{self.filename.stem}\n"
-        text += f"From {self.timestamps[0]:8.2f}s "
-        text += f"to {self.timestamps[-1]:8.2f}s\n"
         return text
 
 
@@ -160,13 +157,15 @@ def plot_twist(data: LogData):
     for drone, twists in zip(data.twists.keys(), data.twists.values()):
         sp = [sqrt(twist.twist.linear.x**2 + twist.twist.linear.y ** 2 + twist.twist.angular.z**2)
               for twist in twists]
-        max_len = min(len(data.timestamps), len(sp))
-        ax.plot(data.timestamps[:max_len], sp[:max_len], label=drone)
+        ts = [timestamp_to_float(twist.header) - timestamp_to_float(twists[0].header)
+              for twist in twists]
+        ax.plot(ts, sp, label=drone)
 
     sp = [sqrt(twist.twist.linear.x**2 + twist.twist.linear.y ** 2 + twist.twist.angular.z**2)
           for twist in data.centroid_twists]
-    max_len = min(len(data.timestamps), len(sp))
-    ax.plot(data.timestamps[:max_len], sp[:max_len], label='centroid')
+    ts = [timestamp_to_float(twist.header) - timestamp_to_float(data.centroid_twists[0].header)
+          for twist in data.centroid_twists]
+    ax.plot(ts, sp, label='centroid')
 
     ax.set_title(f'Twists {data.filename.stem}')
     ax.set_xlabel('time (s)')
