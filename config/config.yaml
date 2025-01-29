@@ -15,9 +15,14 @@
   state_estimator:
     ros__parameters:
       # Indoor Ground Truth 
-      plugin_name: "ground_truth"
+      # plugin_name: "ground_truth"
       # # Indoor Raw Odometry
       # plugin_name: "raw_odometry"
+      # Real 
+      plugin_name: "mocap_pose"
+      mocap_topic: "/mocap/rigid_bodies"
+      twist_smooth_filter_cte: 0.1
+      orientation_smooth_filter_cte: 0.1
 
   # Motion Controller
   controller_manager:

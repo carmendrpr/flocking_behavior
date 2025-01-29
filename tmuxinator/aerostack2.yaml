@@ -16,11 +16,14 @@ windows:
       layout: tiled
       panes:
       # Platform
-        - ros2 launch as2_platform_multirotor_simulator as2_platform_multirotor_simulator.launch.py
-            namespace:=<%= drone_namespace %>
-            config_file:=config/config.yaml
-            uav_config:=config/uav_config.yaml
-            world_config:=<%= simulation_config_file %>
+        - ros2 launch as2_platform_crazyflie crazyflie_swarm_launch.py
+            platform_config_file:=<%= config_file %>
+            swarm_config_file:=<%= swarm_config %>
+        # - ros2 launch as2_platform_multirotor_simulator as2_platform_multirotor_simulator.launch.py
+        #     namespace:=<%= drone_namespace %>
+        #     config_file:=config/config.yaml
+        #     uav_config:=config/uav_config.yaml
+        #     world_config:=<%= simulation_config_file %>
 
   # Basic Robotics Functions
   - basics_robotics_functions:
