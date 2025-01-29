@@ -17,6 +17,7 @@ Panels:
         - /TF1/Frames1
         - /TF1/Tree1
         - /Marker1
+        - /RobotModel4
       Splitter Ratio: 0.5382353067398071
     Tree Height: 204
   - Class: rviz_common/Selection
@@ -332,6 +333,16 @@ Visualization Manager:
           Value: true
         drone2/odom:
           Value: true
+        drone3/base_link:
+          Value: true
+        drone3/gimbal:
+          Value: true
+        drone3/gimbal_base:
+          Value: true
+        drone3/map:
+          Value: true
+        drone3/odom:
+          Value: true
         earth:
           Value: true
       Marker Scale: 1
@@ -365,6 +376,12 @@ Visualization Manager:
               drone2/base_link:
                 drone2/gimbal_base:
                   drone2/gimbal:
+                    {}
+          drone3/map:
+            drone3/odom:
+              drone3/base_link:
+                drone3/gimbal_base:
+                  drone3/gimbal:
                     {}
       Update Interval: 0
       Value: true
@@ -445,6 +462,57 @@ Visualization Manager:
         Reliability Policy: Reliable
         Value: /viz/drone1/queue_poses
       Value: true
+    - Alpha: 1
+      Class: rviz_default_plugins/RobotModel
+      Collision Enabled: false
+      Description File: ""
+      Description Source: Topic
+      Description Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /drone3/robot_description
+      Enabled: true
+      Links:
+        All Links Enabled: true
+        Expand Joint Details: false
+        Expand Link Details: false
+        Expand Tree: false
+        Link Tree Style: Links in Alphabetic Order
+        base_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        rotor_0:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        rotor_1:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        rotor_2:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        rotor_3:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+      Mass Properties:
+        Inertia: false
+        Mass: false
+      Name: RobotModel
+      TF Prefix: /drone3
+      Update Interval: 0
+      Value: true
+      Visual Enabled: true
   Enabled: true
   Global Options:
     Background Color: 119; 118; 123

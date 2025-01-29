@@ -58,6 +58,9 @@ windows:
         -  ros2 launch as2_behaviors_swarm_flocking swarm_flocking_behavior.launch.py
         # - ros2 run as2_behavior_swarm swarm_behavior_node --ros-args -r  __ns:=/Swarm
         - python3 mission_swarm.py
+        # - python3 mission_dinamic_swarm.py
+        - sleep 100 && ./stop.bash
+        
         <%- end %>
 
   # Mission monitoring

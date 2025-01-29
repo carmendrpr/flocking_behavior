@@ -70,10 +70,22 @@ class FlockingBehavior(BehaviorHandler):
 
         return self._set_swarm_formation.call(msg)
 
-    def modify_formation(self, new_pose: list[PoseWithID]):
+    def modify_formation(self, swarm_formation):
         msg = SetSwarmFormation.Request()
         msg.modified_swarm = True
-        msg.swarm_formation = self.__get_new_pose(new_pose)
+        msg.swarm_formation = swarm_formation
+        return self._set_swarm_formation.call(msg)
+
+    def new_drone(self, new_drone):
+        msg = SetSwarmFormation.Request()
+        msg.new_drone = True
+        msg.swarm_formation = new_drone
+        return self._set_swarm_formation.call(msg)
+
+    def detach_drone(self, drone_id):
+        msg = SetSwarmFormation.Request()
+        msg.detach_drone = True
+        msg.swarm_formation = drone_id
         return self._set_swarm_formation.call(msg)
 
     def start(self, path: Union[list, tuple, Path, PoseWithID],

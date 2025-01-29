@@ -257,5 +257,5 @@ def main(log_file: str):
 if __name__ == "__main__":
     # main('rosbags/test2')
     # main('rosbags/Experimentos/Lineal_Vel_1/')
-    main('rosbags/Experimentos/Curva_Vel_05/rosbag2_2025_01_23-12_26_16/')
+    main('rosbags/rosbag2_2025_01_23-18_43_59')
     # main('rosbags/Experimentos/Curva_Vel_05/rosbag2_2025_01_23-12_23_57/')

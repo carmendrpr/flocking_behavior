@@ -19,14 +19,15 @@ do_explorations() {
         printf "\n --------- ITERATION $i --------- \n"
         echo "$(date '+%Y%m%d_%H%M%S') ${simulation_config} IT $i" | tee -a EXPERIMENTS.md
 
-        ./launch_as2.bash -m
-        ./rosbag/record_rosbag.bash drone0,drone1,drone2
+        ./launch_as2.bash -m -r
+        # ./rosbag/record_rosbag.bash drone0,drone1,drone2
+        
         ./kill.bash
-        pskill -y gz
+       
     done
 }
 
 simulation_config="config/world_swarm.yalm"
 rviz_config="config_ground_station/rviz2_config.rviz"
 
-do_explorations 10 ${simulation_config} ${rviz_config}
+do_explorations 6 ${simulation_config} ${rviz_config}
