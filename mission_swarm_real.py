@@ -196,8 +196,7 @@ def main():
     time.sleep(2)
     path = [0.1, 0, 1.5]
     swarm.run(path, False)
-    swarm.drones[0].flocking.pause()
-    swarm.on_your_marks()
+
 
     # time.sleep(70)
     time.sleep(57)
