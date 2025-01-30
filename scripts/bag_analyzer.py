@@ -2,6 +2,7 @@
 bag_analyzer.py
 """
 
+from collections import deque
 import copy
 from dataclasses import dataclass, field
 from math import sqrt
@@ -249,6 +250,8 @@ def get_metrics(data: LogData):
 
     print('------- ALIGNMENT -------')
     for k, v in data.alignment_metric(timestamp_to_float(data.traj[0].header)).items():
+        # print(f'\t{k}: {v[0]:.3f} ± {v[1]:.3f} [m/s]' +
+        #       f' | {v[2]:.3f} ± {v[3]:.3f} [rad] | {v[4]:.3f} ± {v[5]:.3f} [rad]')
         print(f'\t{k}: {v[0]:.3f} ± {v[1]:.3f} [m/s]')
 
     print('------- REFERENCE ERROR -------')
@@ -268,7 +271,7 @@ def plot_path(data: LogData):
     for drone, ref_poses in zip(data.ref_poses.keys(), data.ref_poses.values()):
         x = [pose.pose.position.x for pose in ref_poses]
         y = [pose.pose.position.y for pose in ref_poses]
-        ax.plot(x, y, label=f'{drone}_ref')
+        ax.plot(x, y, linestyle='dashed', label=f'{drone}_ref')
 
     x = [pose.pose.position.x for pose in data.centroid_poses]
     y = [pose.pose.position.y for pose in data.centroid_poses]
@@ -356,9 +359,9 @@ def plot_colored_path(data: LogData):
         y = [pose.pose.position.y for pose in poses]
         c = [sqrt(twist.twist.linear.x**2 + twist.twist.linear.y ** 2 + twist.twist.angular.z**2)
              for twist in twists]
-        # lines = colored_line(x, y, c, ax, linewidth=2, cmap="plasma")
-        # fig.colorbar(lines, label=drone)  # add a color legend
-        ax.plot(x, y, label=drone)
+        lines = colored_line(x, y, c, ax, linewidth=2, cmap="plasma")
+        fig.colorbar(lines, label=drone)  # add a color legend
+        # ax.plot(x, y, label=drone)
 
     x = [pose.pose.position.x for pose in data.centroid_poses]
     y = [pose.pose.position.y for pose in data.centroid_poses]
@@ -392,24 +395,33 @@ def plot_x(data: LogData):
 
 def plot_twist(data: LogData):
     """Plot twists"""
-    # FIXME(pariaspe): not using same t0
+    t0 = timestamp_to_float(data.traj[0].header)
     fig, ax = plt.subplots()
     for drone, twists in zip(data.twists.keys(), data.twists.values()):
-        sp = [sqrt(twist.twist.linear.x**2 + twist.twist.linear.y ** 2 + twist.twist.angular.z**2)
-              for twist in twists]
-        ts = [timestamp_to_float(twist.header) - timestamp_to_float(twists[0].header)
-              for twist in twists]
+        sp, ts = [], []
+        for twist in twists:
+            if timestamp_to_float(twist.header) < t0:
+                continue
+            sp.append(sqrt(twist.twist.linear.x**2 +
+                      twist.twist.linear.y ** 2 + twist.twist.angular.z**2))
+            ts.append(timestamp_to_float(twist.header) - t0)
         ax.plot(ts, sp, label=drone)
 
-    sp = [sqrt(twist.twist.linear.x**2 + twist.twist.linear.y ** 2 + twist.twist.angular.z**2)
-          for twist in data.centroid_twists]
-    ts = [timestamp_to_float(twist.header) - timestamp_to_float(data.centroid_twists[0].header)
-          for twist in data.centroid_twists]
+    sp, ts = [], []
+    window = deque(maxlen=10)
+    for twist in data.centroid_twists:
+        if timestamp_to_float(twist.header) < t0:
+            continue
+        window.append(sqrt(twist.twist.linear.x**2 +
+                      twist.twist.linear.y ** 2 + twist.twist.angular.z**2))
+        sp.append(np.mean(window))
+        ts.append(timestamp_to_float(twist.header) - t0)
     ax.plot(ts, sp, label='centroid')
 
     ax.set_title(f'Twists {data.filename.stem}')
     ax.set_xlabel('time (s)')
     ax.set_ylabel('twist (m/s)')
+    ax.set_ylim(0, 1)
     ax.legend()
     ax.grid()
     fig.savefig(f"/tmp/twist_{data.filename.stem}.png")
@@ -418,23 +430,85 @@ def plot_twist(data: LogData):
 
 def plot_twist_in_swarm(data: LogData):
     """Plot twists"""
+    t0 = timestamp_to_float(data.traj[0].header)
+
     fig, ax = plt.subplots()
     for drone, twists in zip(data.twists_in_swarm.keys(), data.twists_in_swarm.values()):
-        sp = [sqrt(twist.twist.linear.x**2 + twist.twist.linear.y ** 2 + twist.twist.angular.z**2)
-              for twist in twists]
-        ts = [timestamp_to_float(twist.header) - timestamp_to_float(twists[0].header)
-              for twist in twists]
+        sp, ts = [], []
+        window = deque(maxlen=10)
+        for twist in twists:
+            if timestamp_to_float(twist.header) < t0:
+                continue
+            window.append(sqrt(twist.twist.linear.x**2 +
+                               twist.twist.linear.y ** 2 + twist.twist.angular.z**2))
+            sp.append(np.mean(window))
+            ts.append(timestamp_to_float(twist.header) - t0)
         ax.plot(ts, sp, label=drone)
 
-    sp = [sqrt(twist.twist.linear.x**2 + twist.twist.linear.y ** 2 + twist.twist.angular.z**2)
-          for twist in data.centroid_twists]
-    ts = [timestamp_to_float(twist.header) - timestamp_to_float(data.centroid_twists[0].header)
-          for twist in data.centroid_twists]
+    sp, ts = [], []
+    window = deque(maxlen=10)
+    for twist in data.centroid_twists:
+        if timestamp_to_float(twist.header) < t0:
+            continue
+        window.append(sqrt(twist.twist.linear.x**2 +
+                           twist.twist.linear.y ** 2 + twist.twist.angular.z**2))
+        sp.append(np.mean(window))
+        ts.append(timestamp_to_float(twist.header) - t0)
     ax.plot(ts, sp, label='centroid')
+
+    ax.set_title(f'Twists in swarm {data.filename.stem}')
+    ax.set_xlabel('time (s)')
+    ax.set_ylabel('twist (m/s)')
+    ax.set_ylim(0, 1)
+    ax.legend()
+    ax.grid()
+    fig.savefig(f"/tmp/twist_in_swarm_{data.filename.stem}.png")
+    return fig
+
+
+def plot_all_twist(data: LogData):
+    """Plot twists"""
+    t0 = timestamp_to_float(data.traj[0].header)
+    c = {'drone0': 'r', 'drone1': 'g', 'drone2': 'b'}
+
+    fig, ax = plt.subplots()
+    for drone, twists in zip(data.twists.keys(), data.twists.values()):
+        sp, ts = [], []
+        for twist in twists:
+            if timestamp_to_float(twist.header) < t0:
+                continue
+            sp.append(sqrt(twist.twist.linear.x**2 +
+                      twist.twist.linear.y ** 2 + twist.twist.angular.z**2))
+            ts.append(timestamp_to_float(twist.header) - t0)
+        ax.plot(ts, sp, c[drone], label=drone)
+
+    for drone, twists in zip(data.twists_in_swarm.keys(), data.twists_in_swarm.values()):
+        sp, ts = [], []
+        window = deque(maxlen=10)
+        for twist in twists:
+            if timestamp_to_float(twist.header) < t0:
+                continue
+            window.append(sqrt(twist.twist.linear.x**2 +
+                               twist.twist.linear.y ** 2 + twist.twist.angular.z**2))
+            sp.append(np.mean(window))
+            ts.append(timestamp_to_float(twist.header) - t0)
+        ax.plot(ts, sp, c[drone], linestyle='dotted', label=f'{drone}_rel')
+
+    sp, ts = [], []
+    window = deque(maxlen=10)
+    for twist in data.centroid_twists:
+        if timestamp_to_float(twist.header) < t0:
+            continue
+        window.append(sqrt(twist.twist.linear.x**2 +
+                           twist.twist.linear.y ** 2 + twist.twist.angular.z**2))
+        sp.append(np.mean(window))
+        ts.append(timestamp_to_float(twist.header) - t0)
+    ax.plot(ts, sp, 'y', label='centroid')
 
     ax.set_title(f'Twists {data.filename.stem}')
     ax.set_xlabel('time (s)')
     ax.set_ylabel('twist (m/s)')
+    ax.set_ylim(0, 1)
     ax.legend()
     ax.grid()
     fig.savefig(f"/tmp/twist_in_swarm_{data.filename.stem}.png")
@@ -460,17 +534,20 @@ def main(log_file: str):
         # fig2 = plot_twist(data)
         # plot_x(data)
         # plot_twist_in_swarm(data)
+        plot_all_twist(data)
 
         print(data)
         get_metrics(data)
-        plot_colored_path(data)
+        # plot_colored_path(data)
 
         plt.show()
 
 
 if __name__ == "__main__":
     # main('rosbags/test2')
-    main('rosbags/Experimentos/lineal/Lineal_Vel_05/rosbags/rosbag2_2025_01_24-12_49_36')
+    main('rosbags/rosbag2_2025_01_30-15_09_27')
+    # main('rosbags/Experimentos/lineal/Lineal_Vel_05/rosbags/rosbag2_2025_01_24-12_49_36')
+    # main('rosbags/Experimentos/Curva/Curva_Vel_05/rosbags/rosbag2_2025_01_24-13_06_54')
 
     # main('rosbags/Experimentos/lineal/Lineal_Vel_05/rosbags')
     # main('rosbags/Experimentos/Lineal_Vel_1/')
