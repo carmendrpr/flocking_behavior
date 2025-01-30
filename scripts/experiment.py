@@ -4,6 +4,7 @@ experiment.py
 
 from dataclasses import dataclass, field
 from pathlib import Path
+import matplotlib.pyplot as plt
 
 from bag_analyzer import LogData, timestamp_to_float
 
@@ -14,6 +15,7 @@ class Stats:
     cohesion: dict[str, tuple[float, float]]
     separation: dict[str, tuple[float, float]]
     alignment: dict[str, tuple[float, float]]
+    ref_error: dict[str, tuple[float, float]]
 
     def __str__(self) -> str:
         c = '------- COHESION -------\n'
@@ -28,9 +30,14 @@ class Stats:
         for k, v in self.alignment.items():
             a += f'\t{k}: {v[0]:.3f} ± {v[1]:.3f} [m/s]\n'
 
+        r = '------- REFERENCE ERROR -------\n'
+        for k, v in self.ref_error.items():
+            r += f'\t{k}: {v[0]:.3f} ± {v[1]:.3f} [m]\n'
+
         return (f"{c}\n"
                 f"{s}\n"
-                f"{a}\n")
+                f"{a}\n"
+                f"{r}\n")
 
 
 @dataclass
@@ -71,6 +78,7 @@ class Experiment:
         cohesion = {}
         separation = {}
         alignment = {}
+        ref_error = {}
 
         i = 0
         for v in self.log_datas.values():
@@ -94,11 +102,42 @@ class Experiment:
                     alignment[k][1] += v2[1]
                 except KeyError:
                     alignment[k] = list(v2)
+            for k, v2 in v.ref_error_metric(timestamp_to_float(v.traj[0].header)).items():
+                try:
+                    ref_error[k][0] += v2[0]
+                    ref_error[k][1] += v2[1]
+                except KeyError:
+                    ref_error[k] = list(v2)
             i += 1
         cohesion = {k: (v[0] / i, v[1] / i) for k, v in cohesion.items()}
         separation = {k: (v[0] / i, v[1] / i) for k, v in separation.items()}
         alignment = {k: (v[0] / i, v[1] / i) for k, v in alignment.items()}
-        return Stats(cohesion, separation, alignment)
+        ref_error = {k: (v[0] / i, v[1] / i) for k, v in ref_error.items()}
+        return Stats(cohesion, separation, alignment, ref_error)
+
+    def plot_path(self):
+        """Plot paths"""
+        colors = ['r', 'm', 'b', 'y', 'g', 'c', 'k', 'w']
+        fig, ax = plt.subplots()
+        i = 0
+        for data in self.log_datas.values():
+            for drone, poses, c in zip(data.poses.keys(), data.poses.values(), colors):
+                # https://stackoverflow.com/questions/52773215
+                x = [pose.pose.position.x for pose in poses]
+                y = [pose.pose.position.y for pose in poses]
+                ax.plot(x, y, c, label=f'{drone}_{i}')
+            i += 1
+        x = [pose.pose.position.x for pose in data.centroid_poses]
+        y = [pose.pose.position.y for pose in data.centroid_poses]
+        ax.plot(x, y, label='centroid')
+
+        ax.set_title(f'Path {data.filename.stem}')
+        ax.set_xlabel('y (m)')
+        ax.set_ylabel('x (m)')
+        ax.legend()
+        ax.grid()
+        fig.savefig(f"/tmp/path_{data.filename.stem}.png")
+        return fig
 
 
 LINEAL05 = [
@@ -133,7 +172,7 @@ CURVA05 = [
 CURVA1 = [
     'rosbags/Experimentos/Curva/Curva_Vel_1/rosbag2_2025_01_27-09_24_02',
     'rosbags/Experimentos/Curva/Curva_Vel_1/rosbag2_2025_01_27-09_30_57',
-    'rosbags/Experimentos/Curva/Curva_Vel_1/rosbag2_2025_01_27-09_32_41',
+    # 'rosbags/Experimentos/Curva/Curva_Vel_1/rosbag2_2025_01_27-09_32_41',
     'rosbags/Experimentos/Curva/Curva_Vel_1/rosbag2_2025_01_27-09_34_25',
 ]
 
@@ -147,5 +186,10 @@ CURVA2 = [
 ]
 
 if __name__ == "__main__":
-    exp = Experiment("LINEAL05", LINEAL05)
+    # exp = Experiment("LINEAL05", LINEAL05)
+    # exp.print_stats()
+
+    exp = Experiment("CURVA1", CURVA1)
     exp.print_stats()
+    exp.plot_path()
+    plt.show()
