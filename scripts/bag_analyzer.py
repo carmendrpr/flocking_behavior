@@ -8,7 +8,6 @@ from math import sqrt
 from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
-import transforms3d._gohlketransforms
 
 from rclpy.time import Duration
 from tf2_ros.buffer import Buffer
@@ -16,7 +15,6 @@ from geometry_msgs.msg import PoseStamped, TransformStamped, TwistStamped
 from std_msgs.msg import Header
 from tf2_msgs.msg import TFMessage
 import tf2_geometry_msgs
-import transforms3d
 
 from bag_reader import read_rosbag, deserialize_msgs, deserialize_tfs
 
@@ -62,13 +60,6 @@ def distance(pose1: PoseStamped, pose2: PoseStamped, plane: bool = False) -> flo
     return sqrt(dx**2 + dy**2 + dz**2)
 
 
-def distance_to_transform(pose: PoseStamped, transf: TransformStamped) -> float:
-    dx = pose.pose.position.x - transf.transform.translation.x
-    dy = pose.pose.position.y - transf.transform.translation.y
-    dz = pose.pose.position.z - transf.transform.translation.z
-    return sqrt(dx**2 + dy**2 + dz**2)
-
-
 def twist_to_polar_vector(twist: TwistStamped) -> tuple[float, float]:
     """Convert twist to polar 3d vector"""
     x = twist.twist.linear.x
@@ -83,30 +74,6 @@ def twist_to_polar_vector(twist: TwistStamped) -> tuple[float, float]:
     return r, theta, phi
 
 
-def inverse_transform_stamped(transform: TransformStamped) -> TransformStamped:
-    """Inverse transform"""
-    t = transform.transform
-    m = transforms3d.affines.compose(
-        [t.translation.x, t.translation.y, t.translation.z],
-        transforms3d.quaternions.quat2mat(
-            [t.rotation.w, t.rotation.x, t.rotation.y, t.rotation.z]),
-        [1.0, 1.0, 1.0])
-    m_inv = np.linalg.inv(m)
-    t_inv = TransformStamped()
-    t_inv.header = transform.header
-    t_inv.child_frame_id = transform.header.frame_id
-    t_inv.header.frame_id = transform.child_frame_id
-    t_inv.transform.translation.x = m_inv[0, 3]
-    t_inv.transform.translation.y = m_inv[1, 3]
-    t_inv.transform.translation.z = m_inv[2, 3]
-    q = transforms3d.quaternions.mat2quat(m_inv[:3, :3])
-    t_inv.transform.rotation.x = q[0]
-    t_inv.transform.rotation.y = q[1]
-    t_inv.transform.rotation.z = q[2]
-    t_inv.transform.rotation.w = q[3]
-    return t_inv
-
-
 @dataclass
 class LogData:
     """Data read from rosbag file"""
@@ -118,8 +85,8 @@ class LogData:
     ref_poses: dict[str, list[PoseStamped]] = field(default_factory=dict)
     poses_in_swarm: dict[str, list[PoseStamped]] = field(default_factory=dict)
     twists_in_swarm: dict[str, list[TwistStamped]] = field(default_factory=dict)
-    poses_in_ref: dict[str, list[PoseStamped]] = field(default_factory=dict)
     traj: list[PoseStamped] = field(default_factory=list)
+    tf_static: dict[str, TransformStamped] = field(default_factory=dict)
 
     @ classmethod
     def from_rosbag(cls, rosbag: Path) -> 'LogData':
@@ -133,12 +100,11 @@ class LogData:
         print('Processing /tf...')
         buffer = deserialize_tfs(rosbag_msgs['/tf'], buffer)
 
-        tf_static: dict[str, TransformStamped] = {}
         tfs = deserialize_msgs(rosbag_msgs['/tf_static'], TFMessage)
         for tf in tfs:
             for transform in tf.transforms:
                 k = f'{transform.header.frame_id}_{transform.child_frame_id}'
-                tf_static[k] = transform
+                log_data.tf_static[k] = transform
 
         for topic, msgs in rosbag_msgs.items():
             if "self_localization/pose" in topic:
@@ -148,7 +114,6 @@ class LogData:
                 log_data.ref_poses[drone_id] = []
                 log_data.twists_in_swarm[drone_id] = []
                 log_data.poses_in_swarm[drone_id] = []
-                log_data.poses_in_ref[drone_id] = []
 
                 for pose in poses:
                     log_data.poses[drone_id].append(pose)
@@ -165,7 +130,7 @@ class LogData:
 
                         # do static transform manually
                         ref_pose = tf2_geometry_msgs.do_transform_pose_stamped(
-                            centroid_in_earth, tf_static[f'Swarm/Swarm_Swarm/{drone_id}_ref'])
+                            centroid_in_earth, log_data.tf_static[f'Swarm/Swarm_Swarm/{drone_id}_ref'])
                         ref_pose.header.frame_id = 'earth'
                         log_data.ref_poses[drone_id].append(copy.deepcopy(ref_pose))
 
@@ -174,12 +139,6 @@ class LogData:
                         log_data.poses_in_swarm[drone_id].append(pose_in_swarm)
                         log_data.twists_in_swarm[drone_id].append(derivate_pose(
                             log_data.poses_in_swarm[drone_id], log_data.twists_in_swarm[drone_id], 0.01))
-
-                        pose_in_ref = tf2_geometry_msgs.do_transform_pose_stamped(
-                            pose_in_swarm, inverse_transform_stamped(tf_static[f'Swarm/Swarm_Swarm/{drone_id}_ref']))
-                        pose_in_ref.header.stamp = pose.header.stamp
-                        pose_in_ref.header.frame_id = f'Swarm/{drone_id}_ref'
-                        log_data.poses_in_ref[drone_id].append(pose_in_ref)
             elif "self_localization/twist" in topic:
                 drone_id = topic.split("/")[1]
                 log_data.twists[drone_id] = deserialize_msgs(msgs, TwistStamped)
@@ -256,17 +215,21 @@ class LogData:
             #                                     np.mean(phi), np.std(phi))
         return drone_to_centroid_mean_twists
 
-    def ref_error_metric(self, t0: float = None) -> float:
+    def ref_error_metric(self, t0: float = None) -> dict[str, tuple[float, float]]:
         drone_to_ref_distances = {}
-        swarm_centroid = PoseStamped()
-        swarm_centroid.header.frame_id = 'Swarm/Swarm'
-        for drone, poses in zip(self.poses_in_ref.keys(), self.poses_in_ref.values()):
+        for drone, poses in zip(self.poses_in_swarm.keys(), self.poses_in_swarm.values()):
+            ref = PoseStamped()
+            ref.header.frame_id = f'Swarm/{drone}_ref'
+            ref.pose.position.x = self.tf_static[f'Swarm/Swarm_Swarm/{drone}_ref'].transform.translation.x
+            ref.pose.position.y = self.tf_static[f'Swarm/Swarm_Swarm/{drone}_ref'].transform.translation.y
+            ref.pose.position.z = self.tf_static[f'Swarm/Swarm_Swarm/{drone}_ref'].transform.translation.z
+
             for pose in poses:
                 if t0 and timestamp_to_float(pose.header) < t0:
                     continue
                 if drone not in drone_to_ref_distances:
                     drone_to_ref_distances[drone] = []
-                drone_to_ref_distances[drone].append(distance(pose, swarm_centroid, True))
+                drone_to_ref_distances[drone].append(distance(pose, ref, True))
 
         drone_to_ref_mean_distances = {}
         for k, distances in drone_to_ref_distances.items():
@@ -287,6 +250,10 @@ def get_metrics(data: LogData):
     print('------- ALIGNMENT -------')
     for k, v in data.alignment_metric(timestamp_to_float(data.traj[0].header)).items():
         print(f'\t{k}: {v[0]:.3f} ± {v[1]:.3f} [m/s]')
+
+    print('------- REFERENCE ERROR -------')
+    for k, v in data.ref_error_metric(timestamp_to_float(data.traj[0].header)).items():
+        print(f'\t{k}: {v[0]:.3f} ± {v[1]:.3f} [m]')
 
 
 def plot_path(data: LogData):
@@ -425,6 +392,7 @@ def plot_x(data: LogData):
 
 def plot_twist(data: LogData):
     """Plot twists"""
+    # FIXME(pariaspe): not using same t0
     fig, ax = plt.subplots()
     for drone, twists in zip(data.twists.keys(), data.twists.values()):
         sp = [sqrt(twist.twist.linear.x**2 + twist.twist.linear.y ** 2 + twist.twist.angular.z**2)
@@ -497,8 +465,6 @@ def main(log_file: str):
         get_metrics(data)
         plot_colored_path(data)
 
-        # r = ref_error_metric(data, timestamp_to_float(data.traj[0].header))
-        # print('Ref Error', r)
         plt.show()
 
 

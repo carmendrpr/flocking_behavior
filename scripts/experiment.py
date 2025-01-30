@@ -15,6 +15,7 @@ class Stats:
     cohesion: dict[str, tuple[float, float]]
     separation: dict[str, tuple[float, float]]
     alignment: dict[str, tuple[float, float]]
+    ref_error: dict[str, tuple[float, float]]
 
     def __str__(self) -> str:
         c = '------- COHESION -------\n'
@@ -29,9 +30,14 @@ class Stats:
         for k, v in self.alignment.items():
             a += f'\t{k}: {v[0]:.3f} ± {v[1]:.3f} [m/s]\n'
 
+        r = '------- REFERENCE ERROR -------\n'
+        for k, v in self.ref_error.items():
+            r += f'\t{k}: {v[0]:.3f} ± {v[1]:.3f} [m]\n'
+
         return (f"{c}\n"
                 f"{s}\n"
-                f"{a}\n")
+                f"{a}\n"
+                f"{r}\n")
 
 
 @dataclass
@@ -72,6 +78,7 @@ class Experiment:
         cohesion = {}
         separation = {}
         alignment = {}
+        ref_error = {}
 
         i = 0
         for v in self.log_datas.values():
@@ -95,11 +102,18 @@ class Experiment:
                     alignment[k][1] += v2[1]
                 except KeyError:
                     alignment[k] = list(v2)
+            for k, v2 in v.ref_error_metric(timestamp_to_float(v.traj[0].header)).items():
+                try:
+                    ref_error[k][0] += v2[0]
+                    ref_error[k][1] += v2[1]
+                except KeyError:
+                    ref_error[k] = list(v2)
             i += 1
         cohesion = {k: (v[0] / i, v[1] / i) for k, v in cohesion.items()}
         separation = {k: (v[0] / i, v[1] / i) for k, v in separation.items()}
         alignment = {k: (v[0] / i, v[1] / i) for k, v in alignment.items()}
-        return Stats(cohesion, separation, alignment)
+        ref_error = {k: (v[0] / i, v[1] / i) for k, v in ref_error.items()}
+        return Stats(cohesion, separation, alignment, ref_error)
 
     def plot_path(self):
         """Plot paths"""
