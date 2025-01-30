@@ -4,6 +4,7 @@ experiment.py
 
 from dataclasses import dataclass, field
 from pathlib import Path
+import matplotlib.pyplot as plt
 
 from bag_analyzer import LogData, timestamp_to_float
 
@@ -100,6 +101,30 @@ class Experiment:
         alignment = {k: (v[0] / i, v[1] / i) for k, v in alignment.items()}
         return Stats(cohesion, separation, alignment)
 
+    def plot_path(self):
+        """Plot paths"""
+        colors = ['r', 'm', 'b', 'y', 'g', 'c', 'k', 'w']
+        fig, ax = plt.subplots()
+        i = 0
+        for data in self.log_datas.values():
+            for drone, poses, c in zip(data.poses.keys(), data.poses.values(), colors):
+                # https://stackoverflow.com/questions/52773215
+                x = [pose.pose.position.x for pose in poses]
+                y = [pose.pose.position.y for pose in poses]
+                ax.plot(x, y, c, label=f'{drone}_{i}')
+            i += 1
+        x = [pose.pose.position.x for pose in data.centroid_poses]
+        y = [pose.pose.position.y for pose in data.centroid_poses]
+        ax.plot(x, y, label='centroid')
+
+        ax.set_title(f'Path {data.filename.stem}')
+        ax.set_xlabel('y (m)')
+        ax.set_ylabel('x (m)')
+        ax.legend()
+        ax.grid()
+        fig.savefig(f"/tmp/path_{data.filename.stem}.png")
+        return fig
+
 
 LINEAL05 = [
     'rosbags/Experimentos/lineal/Lineal_Vel_05/rosbags/rosbag2_2025_01_24-12_49_36',
@@ -133,7 +158,7 @@ CURVA05 = [
 CURVA1 = [
     'rosbags/Experimentos/Curva/Curva_Vel_1/rosbag2_2025_01_27-09_24_02',
     'rosbags/Experimentos/Curva/Curva_Vel_1/rosbag2_2025_01_27-09_30_57',
-    'rosbags/Experimentos/Curva/Curva_Vel_1/rosbag2_2025_01_27-09_32_41',
+    # 'rosbags/Experimentos/Curva/Curva_Vel_1/rosbag2_2025_01_27-09_32_41',
     'rosbags/Experimentos/Curva/Curva_Vel_1/rosbag2_2025_01_27-09_34_25',
 ]
 
@@ -147,5 +172,10 @@ CURVA2 = [
 ]
 
 if __name__ == "__main__":
-    exp = Experiment("LINEAL05", LINEAL05)
+    # exp = Experiment("LINEAL05", LINEAL05)
+    # exp.print_stats()
+
+    exp = Experiment("CURVA1", CURVA1)
     exp.print_stats()
+    exp.plot_path()
+    plt.show()
