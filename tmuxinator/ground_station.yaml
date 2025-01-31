@@ -32,7 +32,7 @@ windows:
       <%- if rviz %>
         - ros2 launch as2_visualization swarm_viz.launch.py
             namespace_list:=<%= drone_namespace %>
-             rviz_config:=config_ground_station/rviz2_config.rviz
+             rviz_config:=config_ground_station/rviz4_config.rviz
             # rviz_config:=config_ground_station/config4.rviz
             drone_model:=quadrotor_base
       <%- end %>

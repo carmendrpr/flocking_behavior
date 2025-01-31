@@ -57,8 +57,8 @@ windows:
         <%- if base_launch %>
         -  ros2 launch as2_behaviors_swarm_flocking swarm_flocking_behavior.launch.py
         # - ros2 run as2_behavior_swarm swarm_behavior_node --ros-args -r  __ns:=/Swarm
-        - python3 mission_swarm.py
-        # - python3 mission_dinamic_swarm.py
+        #- python3 mission_swarm.py
+        - python3 mission_dinamic_swarm.py
         - sleep 100 && ./stop.bash
         
         <%- end %>
@@ -77,6 +77,6 @@ windows:
         <%- if base_launch %>
         - ros2 launch as2_visualization swarm_viz.launch.py
             namespace_list:=<%= drone_namespace_list %>
-            rviz_config:=config_ground_station/rviz2_config.rviz
+            rviz_config:=config_ground_station/rviz4_config.rviz
             drone_model:=quadrotor_base
         <%- end %>

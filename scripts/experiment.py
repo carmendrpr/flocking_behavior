@@ -141,55 +141,90 @@ class Experiment:
 
 
 LINEAL05 = [
-    'rosbags/Experimentos/lineal/Lineal_Vel_05/rosbags/rosbag2_2025_01_24-12_49_36',
-    'rosbags/Experimentos/lineal/Lineal_Vel_05/rosbags/rosbag2_2025_01_24-12_53_06',
-    'rosbags/Experimentos/lineal/Lineal_Vel_05/rosbags/rosbag2_2025_01_24-12_54_51',
-    'rosbags/Experimentos/lineal/Lineal_Vel_05/rosbags/rosbag2_2025_01_24-13_00_06',
-    'rosbags/Experimentos/lineal/Lineal_Vel_05/rosbags/rosbag2_2025_01_24-13_03_35',
+    'rosbags/Experimentos/Linear/Linear05/rosbag2_2025_01_30-15_43_07',
+    'rosbags/Experimentos/Linear/Linear05/rosbag2_2025_01_30-15_44_51',
+    'rosbags/Experimentos/Linear/Linear05/rosbag2_2025_01_30-15_46_35',
+    'rosbags/Experimentos/Linear/Linear05/rosbag2_2025_01_30-15_48_18',
+    'rosbags/Experimentos/Linear/Linear05/rosbag2_2025_01_30-15_50_02',
+    'rosbags/Experimentos/Linear/Linear05/rosbag2_2025_01_30-15_51_46',
+    'rosbags/Experimentos/Linear/Linear05/rosbag2_2025_01_30-15_53_30',
+    'rosbags/Experimentos/Linear/Linear05/rosbag2_2025_01_30-15_55_14',
+    'rosbags/Experimentos/Linear/Linear05/rosbag2_2025_01_30-15_56_58',
+    'rosbags/Experimentos/Linear/Linear05/rosbag2_2025_01_30-15_58_42',
 ]
 
-LINEAL1 = []
+LINEAL1 = ['rosbags/Experimentos/Linear/Linear1/rosbag2_2025_01_30-16_18_13',
+           'rosbags/Experimentos/Linear/Linear1/rosbag2_2025_01_30-16_19_57',
+           'rosbags/Experimentos/Linear/Linear1/rosbag2_2025_01_30-16_21_40',
+           'rosbags/Experimentos/Linear/Linear1/rosbag2_2025_01_30-16_23_25',
+           'rosbags/Experimentos/Linear/Linear1/rosbag2_2025_01_30-16_25_09',
+           'rosbags/Experimentos/Linear/Linear1/rosbag2_2025_01_30-16_26_53',
+           'rosbags/Experimentos/Linear/Linear1/rosbag2_2025_01_30-16_28_37',
+           'rosbags/Experimentos/Linear/Linear1/rosbag2_2025_01_30-16_30_20',
+           'rosbags/Experimentos/Linear/Linear1/rosbag2_2025_01_30-16_32_04',
+           'rosbags/Experimentos/Linear/Linear1/rosbag2_2025_01_30-16_33_48',
+           ]
 
 LINEAL2 = [
-    'rosbags/Experimentos/lineal/Lineal_Vel_2/rosbag2_2025_01_27-10_16_53',
-    'rosbags/Experimentos/lineal/Lineal_Vel_2/rosbag2_2025_01_27-10_25_33',
-    'rosbags/Experimentos/lineal/Lineal_Vel_2/rosbag2_2025_01_27-10_29_01',
-    'rosbags/Experimentos/lineal/Lineal_Vel_2/rosbag2_2025_01_27-10_32_28',
+    'rosbags/Experimentos/Linear/Linear2/rosbag2_2025_01_30-16_37_25',
+    'rosbags/Experimentos/Linear/Linear2/rosbag2_2025_01_30-16_39_09',
+    'rosbags/Experimentos/Linear/Linear2/rosbag2_2025_01_30-16_40_53',
+    'rosbags/Experimentos/Linear/Linear2/rosbag2_2025_01_30-16_42_37',
+    'rosbags/Experimentos/Linear/Linear2/rosbag2_2025_01_30-16_44_21',
+    'rosbags/Experimentos/Linear/Linear2/rosbag2_2025_01_30-16_46_04',
+    'rosbags/Experimentos/Linear/Linear2/rosbag2_2025_01_30-16_47_48',
+    'rosbags/Experimentos/Linear/Linear2/rosbag2_2025_01_30-16_49_32',
+    'rosbags/Experimentos/Linear/Linear2/rosbag2_2025_01_30-16_51_16',
+    'rosbags/Experimentos/Linear/Linear2/rosbag2_2025_01_30-16_53_00',
 ]
 
 
 CURVA05 = [
-    'rosbags/Experimentos/Curva/Curva_Vel_05/rosbags/rosbag2_2025_01_24-13_06_54',
-    'rosbags/Experimentos/Curva/Curva_Vel_05/rosbags/rosbag2_2025_01_24-13_10_24',
-    'rosbags/Experimentos/Curva/Curva_Vel_05/rosbags/rosbag2_2025_01_24-13_12_09',
-    'rosbags/Experimentos/Curva/Curva_Vel_05/rosbags/rosbag2_2025_01_24-13_13_54',
-    'rosbags/Experimentos/Curva/Curva_Vel_05/rosbags/rosbag2_2025_01_24-13_15_39',
-    'rosbags/Experimentos/Curva/Curva_Vel_05/rosbags/rosbag2_2025_01_24-13_17_25',
-    'rosbags/Experimentos/Curva/Curva_Vel_05/rosbags/rosbag2_2025_01_24-13_19_10',
-    'rosbags/Experimentos/Curva/Curva_Vel_05/rosbags/rosbag2_2025_01_24-13_22_39',
+    'rosbags/Experimentos/Curvilinear/Curvilinear05/rosbag2_2025_01_30-16_56_10',
+    'rosbags/Experimentos/Curvilinear/Curvilinear05/rosbag2_2025_01_30-16_57_54',
+    'rosbags/Experimentos/Curvilinear/Curvilinear05/rosbag2_2025_01_30-16_59_38',
+    'rosbags/Experimentos/Curvilinear/Curvilinear05/rosbag2_2025_01_30-17_01_22',
+    'rosbags/Experimentos/Curvilinear/Curvilinear05/rosbag2_2025_01_30-17_03_06',
+    'rosbags/Experimentos/Curvilinear/Curvilinear05/rosbag2_2025_01_30-17_04_51',
+    'rosbags/Experimentos/Curvilinear/Curvilinear05/rosbag2_2025_01_30-17_06_35',
+    'rosbags/Experimentos/Curvilinear/Curvilinear05/rosbag2_2025_01_30-17_08_18',
+    'rosbags/Experimentos/Curvilinear/Curvilinear05/rosbag2_2025_01_30-17_10_02',
+    'rosbags/Experimentos/Curvilinear/Curvilinear05/rosbag2_2025_01_30-17_11_46',
+
+
 ]
 
 CURVA1 = [
-    'rosbags/Experimentos/Curva/Curva_Vel_1/rosbag2_2025_01_27-09_24_02',
-    'rosbags/Experimentos/Curva/Curva_Vel_1/rosbag2_2025_01_27-09_30_57',
-    # 'rosbags/Experimentos/Curva/Curva_Vel_1/rosbag2_2025_01_27-09_32_41',
-    'rosbags/Experimentos/Curva/Curva_Vel_1/rosbag2_2025_01_27-09_34_25',
+    'rosbags/Experimentos/Curvilinear/Curvilinear1/rosbag2_2025_01_30-17_15_06',
+    'rosbags/Experimentos/Curvilinear/Curvilinear1/rosbag2_2025_01_30-17_16_50',
+    'rosbags/Experimentos/Curvilinear/Curvilinear1/rosbag2_2025_01_30-17_18_33',
+    'rosbags/Experimentos/Curvilinear/Curvilinear1/rosbag2_2025_01_30-17_20_18',
+    'rosbags/Experimentos/Curvilinear/Curvilinear1/rosbag2_2025_01_30-17_22_02',
+    'rosbags/Experimentos/Curvilinear/Curvilinear1/rosbag2_2025_01_30-17_23_45',
+    'rosbags/Experimentos/Curvilinear/Curvilinear1/rosbag2_2025_01_30-17_25_30',
+    'rosbags/Experimentos/Curvilinear/Curvilinear1/rosbag2_2025_01_30-17_27_14',
+    'rosbags/Experimentos/Curvilinear/Curvilinear1/rosbag2_2025_01_30-17_28_57',
+    'rosbags/Experimentos/Curvilinear/Curvilinear1/rosbag2_2025_01_30-17_30_41',
 ]
 
 CURVA2 = [
-    'rosbags/Experimentos/Curva/Curva_Vel_2/rosbag2_2025_01_27-09_55_10',
-    'rosbags/Experimentos/Curva/Curva_Vel_2/rosbag2_2025_01_27-09_56_54',
-    'rosbags/Experimentos/Curva/Curva_Vel_2/rosbag2_2025_01_27-10_02_06',
-    'rosbags/Experimentos/Curva/Curva_Vel_2/rosbag2_2025_01_27-10_05_33',
-    'rosbags/Experimentos/Curva/Curva_Vel_2/rosbag2_2025_01_27-10_07_17',
-    'rosbags/Experimentos/Curva/Curva_Vel_2/rosbag2_2025_01_27-10_09_01',
+    'rosbags/Experimentos/Curvilinear/Curvilinear2/rosbag2_2025_01_30-17_32_43',
+    'rosbags/Experimentos/Curvilinear/Curvilinear2/rosbag2_2025_01_30-17_34_27',
+    'rosbags/Experimentos/Curvilinear/Curvilinear2/rosbag2_2025_01_30-17_36_11',
+    'rosbags/Experimentos/Curvilinear/Curvilinear2/rosbag2_2025_01_30-17_37_55',
+    'rosbags/Experimentos/Curvilinear/Curvilinear2/rosbag2_2025_01_30-17_39_39',
+    'rosbags/Experimentos/Curvilinear/Curvilinear2/rosbag2_2025_01_30-17_41_23',
+    'rosbags/Experimentos/Curvilinear/Curvilinear2/rosbag2_2025_01_30-17_43_06',
+    'rosbags/Experimentos/Curvilinear/Curvilinear2/rosbag2_2025_01_30-17_44_50',
+    'rosbags/Experimentos/Curvilinear/Curvilinear2/rosbag2_2025_01_30-17_46_34',
+    'rosbags/Experimentos/Curvilinear/Curvilinear2/rosbag2_2025_01_30-17_48_18',
 ]
 
 if __name__ == "__main__":
     # exp = Experiment("LINEAL05", LINEAL05)
     # exp.print_stats()
 
-    exp = Experiment("CURVA1", CURVA1)
+    exp = Experiment("CURVA2", CURVA2)
     exp.print_stats()
     exp.plot_path()
     plt.show()

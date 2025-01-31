@@ -26,10 +26,10 @@ drone2:
         x: 0.0 # Initial x position of the vehicle in odometry frame. Meters
         y: 0.0 # Initial y position of the vehicle in odometry frame. Meters
         z: 0.0 # Initial z position of the vehicle in odometry frame. Meters
-# drone3:
-#   platform:
-#     ros__parameters: 
-#       vehicle_initial_pose:
-#         x: -2.0 # Initial x position of the vehicle in odometry frame. Meters
-#         y: -2.0 # Initial y position of the vehicle in odometry frame. Meters
-#         z: 0.0 # Initial z position of the vehicle in odometry frame. Meters
+drone3:
+  platform:
+    ros__parameters: 
+      vehicle_initial_pose:
+        x: -2.0 # Initial x position of the vehicle in odometry frame. Meters
+        y: -2.0 # Initial y position of the vehicle in odometry frame. Meters
+        z: 0.0 # Initial z position of the vehicle in odometry frame. Meters
