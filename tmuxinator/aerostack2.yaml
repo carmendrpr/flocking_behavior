@@ -3,7 +3,6 @@
 drone_namespace           = @settings["drone_namespace"]
 drone_namespace_list      = @settings["drone_namespace_list"]
 simulation_config_file    = @settings["simulation_config_file"]
-motion_controller_plugin  = @settings["motion_controller_plugin"]
 base_launch               = @settings["base_launch"] == "true"
 %>
 name: <%= drone_namespace %>
@@ -31,9 +30,8 @@ windows:
         # Motion Controller
         - ros2 launch as2_motion_controller controller_launch.py
             namespace:=<%= drone_namespace %>
+            plugin_name:=pid_speed_controller
             config_file:=config/config.yaml
-            plugin_name:=<%= motion_controller_plugin %>
-            plugin_config_file:=config/<%= motion_controller_plugin %>.yaml
 
   # Behaviors
   - behaviors:
