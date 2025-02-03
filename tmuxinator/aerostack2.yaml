@@ -13,10 +13,13 @@ windows:
   - platform:
       layout: tiled
       panes:
-      # Platform
+        # Platform
+        <%- if base_launch %>
         - ros2 launch as2_platform_crazyflie crazyflie_swarm_launch.py
-            platform_config_file:=config/config.yaml
-            swarm_config_file:=config/swarm_config.yaml
+            swarm_config_file:=config/config.yaml
+        <%- else %>
+        - echo "Platform already launched in the first tmux session"
+        <%- end %>
 
   # Basic Robotics Functions
   - basics_robotics_functions:
@@ -48,15 +51,13 @@ windows:
   - mission_execution:
       layout:
       panes:
-        
         <%- if base_launch %>
         -  ros2 launch as2_behaviors_swarm_flocking swarm_flocking_behavior.launch.py
             behavior_config_file:=config/config.yaml
         # - ros2 run as2_behavior_swarm swarm_behavior_node --ros-args -r  __ns:=/Swarm
         - python3 mission_swarm.py -h
         # - python3 mission_dinamic_swarm.py
-        - sleep 100 && ./stop.bash
-        
+        # - sleep 100 && ./stop.bash
         <%- end %>
 
   # Mission monitoring
