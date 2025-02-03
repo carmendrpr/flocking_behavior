@@ -2,7 +2,6 @@
 # Input parameters
 drone_namespace           = @settings["drone_namespace"]
 drone_namespace_list      = @settings["drone_namespace_list"]
-simulation_config_file    = @settings["simulation_config_file"]
 base_launch               = @settings["base_launch"] == "true"
 %>
 name: <%= drone_namespace %>
@@ -16,7 +15,7 @@ windows:
       panes:
       # Platform
         - ros2 launch as2_platform_crazyflie crazyflie_swarm_launch.py
-            platform_config_file:=<%= config_file %>
+            platform_config_file:=config/config.yaml
             swarm_config_file:=config/swarm_config.yaml
 
   # Basic Robotics Functions

@@ -9,18 +9,14 @@ usage() {
 }
 
 # Initialize variables with default values
-swarm="false"
 drones_namespace_comma=""
 use_gnome="false"
 
 # Arg parser
-while getopts "rmn:g" opt; do
+while getopts "rn:g" opt; do
   case ${opt} in
     r )
       record_rosbag="true"
-      ;;
-    m )
-      swarm="true"
       ;;
     n )
       drones_namespace_comma="${OPTARG}"
@@ -49,16 +45,9 @@ export AS2_MODULES_PATH=$AS2_MODULES_PATH:$(pwd)/as2_python_api_modules
 ## DEFAULTS
 record_rosbag=${record_rosbag:="false"}
 
-# Set simulation world description config file
-if [[ ${swarm} == "true" ]]; then
-  simulation_config="config/world_swarm.yaml"
-else
-  simulation_config="config/world.yaml"
-fi
-
 # If no drone namespaces are provided, get them from the world description config file
 if [ -z "$drones_namespace_comma" ]; then
-  drones_namespace_comma=$(python3 utils/get_drones.py -p ${simulation_config} --sep ',')
+  drones_namespace_comma=$(python3 utils/get_drones.py -p config/config.yaml --sep ',')
 fi
 IFS=',' read -r -a drone_namespaces <<< "$drones_namespace_comma"
 
@@ -80,7 +69,6 @@ for namespace in ${drone_namespaces[@]}; do
   eval "tmuxinator ${tmuxinator_mode} -n ${namespace} -p tmuxinator/aerostack2.yaml \
     drone_namespace=${namespace} \
     drone_namespace_list=${drones_namespace_comma} \
-    simulation_config_file=${simulation_config} \
     base_launch=${base_launch} \
     ${tmuxinator_end}"
 
