@@ -7,18 +7,18 @@
   # Basic Robotics Functions
   platform:
     ros__parameters:
-      cmd_freq: 100.0  # Hz of platform commands send
-      # # Raw Odometry
-      # use_odom_for_control: true  # Use odometry for control instead of ground truth (default: false)
+      # Motion Capture
+      external_odom: true
+      external_odom_topic: "self_localization/pose"
+      # Flow deck & Lighthouse
+      external_odom: false
 
   # State Estimator
   state_estimator:
     ros__parameters:
-      # Indoor Ground Truth 
-      # plugin_name: "ground_truth"
-      # # Indoor Raw Odometry
+      # # Flow deck & Lighthouse
       # plugin_name: "raw_odometry"
-      # Real 
+      # Motion Capture 
       plugin_name: "mocap_pose"
       mocap_topic: "/mocap/rigid_bodies"
       twist_smooth_filter_cte: 0.1
@@ -28,6 +28,80 @@
   controller_manager:
     ros__parameters:
       cmd_freq: 100.0 # Hz of controller commands send
+      proportional_limitation: true
+      position_control:
+        reset_integral: false
+        antiwindup_cte: 0.5
+        alpha: 0.2
+        kp:
+          x: 1.0
+          y: 1.0
+          z: 1.0
+        kd:
+          x: 0.0
+          y: 0.0
+          z: 0.0
+        ki:
+          x: 0.01
+          y: 0.01
+          z: 0.01
+      speed_control:
+        reset_integral: false
+        antiwindup_cte : 1.0
+        alpha: 0.3
+        kp:
+          x: 0.0
+          y: 0.0
+          z: 0.0
+        kd:
+          x: 0.0
+          y: 0.0
+          z: 0.0
+        ki:
+          x: 0.0
+          y: 0.0
+          z: 0.0
+      speed_in_a_plane_control:
+        reset_integral: false
+        antiwindup_cte: 1.0
+        alpha: 0.3
+        height:
+          kp: 1.0
+          kd: 0.0
+          ki: 0.01
+        speed:
+          kp:
+            x: 0.0
+            y: 0.0
+          kd:
+            x: 0.0
+            y: 0.0
+          ki:
+            x: 0.0
+            y: 0.0
+      trajectory_control:
+        reset_integral: false
+        antiwindup_cte : 1.0
+        alpha: 0.3
+        kp:
+          x: 0.4
+          y: 0.4
+          z: 0.4
+        kd:
+          x: 0.0001
+          y: 0.0001
+          z: 0.0001
+        ki:
+          x: 0.0
+          y: 0.0
+          z: 0.0
+      yaw_control:
+        reset_integral: false
+        antiwindup_cte : 1.0
+        alpha: 0.3
+        kp: 1.0
+        kd: 0.001
+        ki: 0.0
 
   # Behaviors Motion
   TakeoffBehavior:
@@ -43,13 +117,11 @@
       # land_plugin_name: "land_plugin_trajectory"
   GoToBehavior:
     ros__parameters:
-      go_to_plugin_name: "go_to_plugin_trajectory"
-      tf_timeout_threshold: 0.0
+      go_to_plugin_name: "go_to_plugin_position"
       # go_to_plugin_name: "go_to_plugin_trajectory"
   FollowPathBehavior:
     ros__parameters:
-      follow_path_plugin_name: "follow_path_plugin_trajectory"
-      tf_timeout_threshold: 0.0
+      follow_path_plugin_name: "follow_path_plugin_position"
       # follow_path_plugin_name: "follow_path_plugin_trajectory"
   FollowReferenceBehavior:
     ros__parameters:
@@ -57,3 +129,54 @@
       follow_reference_max_speed_y: 0.5
       follow_reference_max_speed_z: 0.5
       tf_timeout_threshold: 0.0
+  SwarmFlockingBehavior:
+    ros__parameters:
+      drone_max_speed: 1.0
+      drone_namespaces:
+        - drone0
+        - drone1
+        - drone2
+      initial_centroid_position:
+        x: 0.0
+        y: 0.0
+        z: 1.5
+      drone0_pose:
+        x: 2.0
+        y: 0.0
+      drone1_pose:
+        x: -2.0
+        y: 0.0
+      drone2_pose:
+        x: 0.0
+        y: 0.0
+      drone3_pose:
+        x: -2.0
+        y: -2.0
+
+# Specific Parameters for each drone
+drone0:
+  platform:
+    ros__parameters:
+      uri: radio://0/80/2M/E7E7E7E701
+  # Motion Capture
+  state_estimator:
+    ros__parameters:
+      rigid_body_name: "1"
+
+drone1:
+  platform:
+    ros__parameters:
+      uri: radio://0/80/2M/E7E7E7E702
+  # Motion Capture
+  state_estimator:
+    ros__parameters:
+      rigid_body_name: "2"
+
+drone2:
+  platform:
+    ros__parameters:
+      uri: radio://0/80/2M/E7E7E7E703
+  # Motion Capture
+  state_estimator:
+    ros__parameters:
+      rigid_body_name: "3"
