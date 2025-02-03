@@ -65,7 +65,7 @@
         - drone0
         - drone1
         - drone2
-        - drone3
+        # - drone3
       initial_centroid_position:
         x: 0.0
         y: 0.0
