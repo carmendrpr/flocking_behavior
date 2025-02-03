@@ -1,9 +1,16 @@
 <%
+require 'date'
+
 # Input parameters
 drone_namespace = @settings["drone_namespace"]
 keyboard_teleop = @settings["keyboard_teleop"] == "true"
 rviz            = @settings["rviz"] == "true"
 rosbag          = @settings["rosbag"] == "true"
+mocap4ros2      = @settings["mocap4ros2"] == "true"
+
+# Other parameters
+## Same name as default, different path
+rosbag_name = DateTime.now.strftime("rosbag2_%Y_%m_%d-%H_%M_%S")
 %>
 
 name: ground_station
@@ -25,17 +32,42 @@ windows:
   - ground_station:
       layout:
       panes:
-      <%- if keyboard_teleop %>
+        <%- if keyboard_teleop %>
         - ros2 launch as2_keyboard_teleoperation as2_keyboard_teleoperation_launch.py
             namespace:=<%= drone_namespace %>
-      <%- end %>
-      <%- if rviz %>
+        <%- end %>
+        <%- if rviz %>
         - ros2 launch as2_visualization swarm_viz.launch.py
             namespace_list:=<%= drone_namespace %>
              rviz_config:=config_ground_station/rviz2_config.rviz
-            # rviz_config:=config_ground_station/config4.rviz
             drone_model:=quadrotor_base
-      <%- end %>
-      <%- if rosbag %>
-        - ./rosbag/record_rosbag.bash <%= drone_namespace %>
-      <%- end %>
+        <%- end %>
+        <%- if mocap4ros2 %>
+        - ros2 launch mocap4r2_optitrack_driver optitrack2.launch.py
+            namespace:=mocap
+            config_file:=config_ground_station/mocap4r2_optitrack.yaml
+        - sleep 1; ros2 lifecycle set /mocap/mocap4r2_optitrack_driver_node activate
+        <%- end %>
+
+    <%- if rosbag %>
+  - rosbag:
+      layout:
+      panes:
+          - ros2 bag record --include-hidden-topics -o ./rosbags/<%= rosbag_name %>
+              /tf
+              /tf_static
+              /Swarm/debug/traj_generated
+          <%- drone_namespace.split(',').each do |drone| %>
+              /<%= drone %>/platform/info
+              /<%= drone %>/self_localization/pose
+              /<%= drone %>/self_localization/twist
+              /<%= drone %>/sensor_measurements/odom
+              /<%= drone %>/traj_gen/yaw
+              /<%= drone %>/debug/ref_traj_point
+              /<%= drone %>/debug/ref_traj_point_array
+              /<%= drone %>/debug/traj_generated
+              /<%= drone %>/ground_truth/pose
+              /<%= drone %>/ground_truth/twist
+          <%- end %>
+    <%- end %>
+    

@@ -2,7 +2,7 @@
 
 usage() {
     echo "  options:"
-    echo "      -m: multi agent. Default not set"
+    echo "      -m: disable launch mocap4ros2. By default set."
     echo "      -t: launch keyboard teleoperation. Default not launch"
     echo "      -v: open rviz. Default launch"
     echo "      -r: record rosbag. Default not launch"
@@ -11,7 +11,7 @@ usage() {
 }
 
 # Initialize variables with default values
-swarm="false"
+mocap4ros2="true"
 keyboard_teleop="false"
 rviz="true"
 rosbag="false"
@@ -22,7 +22,7 @@ use_gnome="false"
 while getopts "mtvrn:g" opt; do
   case ${opt} in
     m )
-      swarm="true"
+      mocap4ros2="false"
       ;;
     t )
       keyboard_teleop="true"
@@ -54,16 +54,9 @@ while getopts "mtvrn:g" opt; do
   esac
 done
 
-# Set simulation world description config file
-if [[ ${swarm} == "true" ]]; then
-  simulation_config="config/world_swarm.yaml"
-else
-  simulation_config="config/world.yaml"
-fi
-
 # If no drone namespaces are provided, get them from the world description config file
 if [ -z "$drones_namespace_comma" ]; then
-  drones_namespace_comma=$(python3 utils/get_drones.py -p ${simulation_config} --sep ',')
+  drones_namespace_comma=$(python3 utils/get_drones.py -p config/config.yaml --sep ',')
 fi
 
 # Select between tmux and gnome-terminal
@@ -80,6 +73,7 @@ eval "tmuxinator ${tmuxinator_mode} -n ground_station -p tmuxinator/ground_stati
   drone_namespace=${drones_namespace_comma} \
   keyboard_teleop=${keyboard_teleop} \
   rviz=${rviz} \
+  mocap4ros2=${mocap4ros2} \
   rosbag=${rosbag} \
   ${tmuxinator_end}"
 
