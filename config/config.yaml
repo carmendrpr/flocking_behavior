@@ -7,7 +7,13 @@
   # Basic Robotics Functions
   platform:
     ros__parameters:
-      cmd_freq: 100.0  # Hz of platform commands send
+      simulation:
+        update_freq: 500.0
+        inertial_odometry_freq: 100.0
+      cmd_freq: 50.0  # Hz of platform commands send
+      gps_pub_freq: 1.0
+      gimbal:
+        pub_freq: 1.0
       # # Raw Odometry
       # use_odom_for_control: true  # Use odometry for control instead of ground truth (default: false)
 
@@ -22,7 +28,7 @@
   # Motion Controller
   controller_manager:
     ros__parameters:
-      cmd_freq: 100.0 # Hz of controller commands send
+      cmd_freq: 50.0 # Hz of controller commands send
 
   # Behaviors Motion
   TakeoffBehavior:
@@ -48,7 +54,31 @@
       # follow_path_plugin_name: "follow_path_plugin_trajectory"
   FollowReferenceBehavior:
     ros__parameters:
-      follow_reference_max_speed_x: 0.5
-      follow_reference_max_speed_y: 0.5
-      follow_reference_max_speed_z: 0.5
+      follow_reference_max_speed_x: 5.0
+      follow_reference_max_speed_y: 5.0
+      follow_reference_max_speed_z: 5.0
       tf_timeout_threshold: 0.0
+  SwarmFlockingBehavior:
+    ros__parameters:
+      drone_max_speed: 1.0
+      drone_namespaces:
+        - drone0
+        - drone1
+        - drone2
+        - drone3
+      initial_centroid_position:
+        x: 0.0
+        y: 0.0
+        z: 1.5
+      drone0_pose:
+        x: 2.0
+        y: 0.0
+      drone1_pose:
+        x: -2.0
+        y: 0.0
+      drone2_pose:
+        x: 0.0
+        y: 0.0
+      drone3_pose:
+        x: -2.0
+        y: -2.0
