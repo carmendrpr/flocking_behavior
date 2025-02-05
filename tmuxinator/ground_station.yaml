@@ -39,8 +39,9 @@ windows:
         <%- if rviz %>
         - ros2 launch as2_visualization swarm_viz.launch.py
             namespace_list:=<%= drone_namespace %>
-             rviz_config:=config_ground_station/rviz2_config.rviz
+            rviz_config:=config_ground_station/rviz2_config.rviz
             drone_model:=quadrotor_base
+            record_length:=5000
         <%- end %>
         <%- if mocap4ros2 %>
         - ros2 launch mocap4r2_optitrack_driver optitrack2.launch.py

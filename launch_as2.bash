@@ -2,8 +2,6 @@
 
 usage() {
     echo "  options:"
-    echo "      -r: record rosbag"
-    echo "      -m: multi agent. Default not set"
     echo "      -n: select drones namespace to launch, values are comma separated. By default, it will get all drones from world description file"
     echo "      -g: launch using gnome-terminal instead of tmux. Default not set"
 }
@@ -13,11 +11,8 @@ drones_namespace_comma=""
 use_gnome="false"
 
 # Arg parser
-while getopts "rn:g" opt; do
+while getopts "n:g" opt; do
   case ${opt} in
-    r )
-      record_rosbag="true"
-      ;;
     n )
       drones_namespace_comma="${OPTARG}"
       ;;
@@ -74,12 +69,6 @@ for namespace in ${drone_namespaces[@]}; do
 
   sleep 0.1 # Wait for tmuxinator to finish
 done
-
-if [[ ${record_rosbag} == "true" ]]; then
-    tmuxinator start -p tmuxinator/rosbag.yml \
-        drones=${drones_namespace_comma} &
-    wait
-fi
 
 # Attach to tmux session
 if [[ ${use_gnome} == "false" ]]; then
