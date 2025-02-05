@@ -11,7 +11,7 @@
       external_odom: true
       external_odom_topic: "self_localization/pose"
       # Flow deck & Lighthouse
-      external_odom: false
+      # external_odom: false
 
   # State Estimator
   state_estimator:
@@ -137,27 +137,24 @@
         - drone1
         - drone2
       initial_centroid_position:
-        x: 0.0
-        y: 0.0
+        x: 0.5
+        y: 2.0
         z: 1.5
       drone0_pose:
-        x: 2.0
-        y: 0.0
-      drone1_pose:
-        x: -2.0
-        y: 0.0
-      drone2_pose:
         x: 0.0
+        y: 0.5
+      drone1_pose:
+        x: 0.0
+        y: -0.5
+      drone2_pose:
+        x: 0.866
         y: 0.0
-      drone3_pose:
-        x: -2.0
-        y: -2.0
 
 # Specific Parameters for each drone
 drone0:
   platform:
     ros__parameters:
-      uri: radio://0/80/2M/E7E7E7E701
+      uri: radio://0/80/2M/E7E7E7E709
   # Motion Capture
   state_estimator:
     ros__parameters:
@@ -175,7 +172,7 @@ drone1:
 drone2:
   platform:
     ros__parameters:
-      uri: radio://0/80/2M/E7E7E7E703
+      uri: radio://0/80/2M/E7E7E7E710
   # Motion Capture
   state_estimator:
     ros__parameters:
