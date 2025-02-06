@@ -5,6 +5,9 @@ drone_namespace_list      = @settings["drone_namespace_list"]
 simulation_config_file    = @settings["simulation_config_file"]
 motion_controller_plugin  = @settings["motion_controller_plugin"]
 base_launch               = @settings["base_launch"] == "true"
+
+as2_config_file = "config/config.yaml"
+# as2_config_file = "config/config_12.yaml"
 %>
 name: <%= drone_namespace %>
 attach: false
@@ -18,7 +21,7 @@ windows:
       # Platform
         - ros2 launch as2_platform_multirotor_simulator as2_platform_multirotor_simulator.launch.py
             namespace:=<%= drone_namespace %>
-            config_file:=config/config.yaml
+            config_file:=<%= as2_config_file %>
             uav_config:=config/uav_config.yaml
             world_config:=<%= simulation_config_file %>
 
@@ -29,11 +32,11 @@ windows:
         # State Estimation
         - ros2 launch as2_state_estimator state_estimator_launch.py
             namespace:=<%= drone_namespace %>
-            config_file:=config/config.yaml
+            config_file:=<%= as2_config_file %>
         # Motion Controller
         - ros2 launch as2_motion_controller controller_launch.py
             namespace:=<%= drone_namespace %>
-            config_file:=config/config.yaml
+            config_file:=<%= as2_config_file %>
             plugin_name:=<%= motion_controller_plugin %>
             plugin_config_file:=config/<%= motion_controller_plugin %>.yaml
 
@@ -44,10 +47,10 @@ windows:
         # Motion Behaviors
         - ros2 launch as2_behaviors_motion motion_behaviors_launch.py
             namespace:=<%= drone_namespace %>
-            config_file:=config/config.yaml
+            config_file:=<%= as2_config_file %>
         - ros2 launch as2_behaviors_motion follow_reference_behavior_launch.py
             namespace:=<%= drone_namespace %>
-            behavior_config_file:=config/config.yaml    
+            behavior_config_file:=<%= as2_config_file %>    
             
     # Mission execution
   - mission_execution:
@@ -56,8 +59,8 @@ windows:
         
         <%- if base_launch %>
         -  ros2 launch as2_behaviors_swarm_flocking swarm_flocking_behavior.launch.py
-            behavior_config_file:=config/config.yaml
-        - python3 mission_swarm.py
+            behavior_config_file:=<%= as2_config_file %>
+        - python3 mission_swarm.py -h
         # - python3 mission_dinamic_swarm.py
         # - sleep 100 && ./stop.bash
         
