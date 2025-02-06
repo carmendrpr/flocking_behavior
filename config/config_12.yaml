@@ -1,0 +1,116 @@
+/**:
+  # Global Parameters
+  ros__parameters:
+    tf_timeout_threshold: 0.05
+
+/**:
+  # Basic Robotics Functions
+  platform:
+    ros__parameters:
+      simulation:
+        update_freq: 500.0
+        inertial_odometry_freq: 100.0
+      cmd_freq: 50.0  # Hz of platform commands send
+      gps_pub_freq: 1.0
+      gimbal:
+        pub_freq: 1.0
+      # # Raw Odometry
+      # use_odom_for_control: true  # Use odometry for control instead of ground truth (default: false)
+
+  # State Estimator
+  state_estimator:
+    ros__parameters:
+      # Indoor Ground Truth 
+      plugin_name: "ground_truth"
+      # # Indoor Raw Odometry
+      # plugin_name: "raw_odometry"
+
+  # Motion Controller
+  controller_manager:
+    ros__parameters:
+      cmd_freq: 50.0 # Hz of controller commands send
+
+  # Behaviors Motion
+  TakeoffBehavior:
+    ros__parameters:
+      # takeoff_plugin_name: "takeoff_plugin_speed"
+      takeoff_plugin_name: "takeoff_plugin_position"
+      # takeoff_plugin_name: "takeoff_plugin_platform"
+      # takeoff_plugin_name: "takeoff_plugin_trajectory"
+  LandBehavior:
+    ros__parameters:
+      land_plugin_name: "land_plugin_speed"
+      # land_plugin_name: "land_plugin_platform"
+      # land_plugin_name: "land_plugin_trajectory"
+  GoToBehavior:
+    ros__parameters:
+      go_to_plugin_name: "go_to_plugin_trajectory"
+      tf_timeout_threshold: 0.0
+      # go_to_plugin_name: "go_to_plugin_trajectory"
+  FollowPathBehavior:
+    ros__parameters:
+      follow_path_plugin_name: "follow_path_plugin_trajectory"
+      tf_timeout_threshold: 0.0
+      # follow_path_plugin_name: "follow_path_plugin_trajectory"
+  FollowReferenceBehavior:
+    ros__parameters:
+      follow_reference_max_speed_x: 5.0
+      follow_reference_max_speed_y: 5.0
+      follow_reference_max_speed_z: 5.0
+      tf_timeout_threshold: 0.0
+  SwarmFlockingBehavior:
+    ros__parameters:
+      drone_max_speed: 1.0
+      drone_namespaces:
+        - drone0
+        - drone1
+        - drone2
+        - drone3
+        - drone4
+        - drone5
+        - drone6
+        - drone7
+        - drone8
+        - drone9
+        - drone10
+        - drone11
+      initial_centroid_position:
+        x: 0.0
+        y: 0.0
+        z: 1.5
+      drone0_pose:
+        x: 2.0
+        y: 0.0
+      drone1_pose:
+        x: -2.0
+        y: 0.0
+      drone2_pose:
+        x: 0.0
+        y: 0.0
+      drone3_pose:
+        x: -2.0
+        y: -2.0
+      drone4_pose:
+        x: 0.0
+        y: -2.0
+      drone5_pose:
+        x: 2.0
+        y: -2.0
+      drone6_pose:
+        x: -2.0
+        y: 2.0
+      drone7_pose:
+        x: 0.0
+        y: 2.0
+      drone8_pose:
+        x: 2.0
+        y: 2.0
+      drone9_pose:
+        x: -2.0
+        y: 4.0
+      drone10_pose:
+        x: 0.0
+        y: 4.0
+      drone11_pose:
+        x: 2.0
+        y: 4.0
