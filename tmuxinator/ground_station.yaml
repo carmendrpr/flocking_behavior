@@ -3,6 +3,7 @@
 drone_namespace = @settings["drone_namespace"]
 keyboard_teleop = @settings["keyboard_teleop"] == "true"
 rviz            = @settings["rviz"] == "true"
+rviz_config     = @settings["rviz_config_file"]
 rosbag          = @settings["rosbag"] == "true"
 %>
 
@@ -32,8 +33,7 @@ windows:
       <%- if rviz %>
         - ros2 launch as2_visualization swarm_viz.launch.py
             namespace_list:=<%= drone_namespace %>
-             rviz_config:=config_ground_station/rviz4_config.rviz
-            # rviz_config:=config_ground_station/config4.rviz
+             rviz_config:=<%= rviz_config %>
             drone_model:=quadrotor_base
       <%- end %>
       <%- if rosbag %>

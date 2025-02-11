@@ -2,7 +2,8 @@
 
 usage() {
     echo "  options:"
-    echo "      -m: multi agent. Default not set"
+    echo "      -m: 4 agent. For mission_dinamic_swarm"
+    echo "      -a: 12 agent. For mission_12"
     echo "      -t: launch keyboard teleoperation. Default not launch"
     echo "      -v: open rviz. Default launch"
     echo "      -r: record rosbag. Default not launch"
@@ -11,7 +12,8 @@ usage() {
 }
 
 # Initialize variables with default values
-swarm="false"
+swarm4="false"
+swarm12="false"
 keyboard_teleop="false"
 rviz="true"
 rosbag="false"
@@ -22,7 +24,10 @@ use_gnome="false"
 while getopts "mtvrn:g" opt; do
   case ${opt} in
     m )
-      swarm="true"
+      swarm4="true"
+      ;;
+    a )
+      swarm12="true"
       ;;
     t )
       keyboard_teleop="true"
@@ -55,10 +60,12 @@ while getopts "mtvrn:g" opt; do
 done
 
 # Set simulation world description config file
-if [[ ${swarm} == "true" ]]; then
-  simulation_config="config/world_swarm.yaml"
-else
-  simulation_config="config/world.yaml"
+if [[ ${swarm4} == "true" ]]; then
+  simulation_config="config/world_swarm_4.yaml"
+elif [[ ${swarm12} == "true" ]]; then
+  simulation_config="config/world_swarm_12.yaml"
+else 
+  simulation_config="config/world_swarm_3.yaml"
 fi
 
 # If no drone namespaces are provided, get them from the world description config file

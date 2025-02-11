@@ -30,7 +30,7 @@
 
 """Simple mission for a swarm of drones."""
 
-__authors__ = 'Pedro Arias Pérez'
+__authors__ = 'Pedro Arias Pérez & Carmen De Rojas Pita-Romero'
 __copyright__ = 'Copyright (c) 2024 Universidad Politécnica de Madrid'
 __license__ = 'BSD-3-Clause'
 
@@ -231,9 +231,6 @@ def main():
     # if confirm("Follow path"):
 
     path = [[15, 0, 1.5]]
-    # path = [[2, -1, 1.5], [2, -2, 1.5], [2, -3, 1.5], [3, -4, 1.5], [4, -3, 1.5], [4, -2,
-    #                                                                                1.5], [4, 2, 1.5], [6, 3, 1.5], [8, 2, 1.5], [8, 0, 1.5], [9, -1, 1.5], [10, 0, 1.5]]
-
     swarm.run(path, False)
     # time.sleep(5)
     swarm_formation = SetSwarmFormation()
@@ -246,7 +243,7 @@ def main():
     pose1 = pose("drone0", 2.0, 0.0, 0.0)
     pose2 = pose("drone1", 0.0, 2.0, 0.0)
     pose3 = pose("drone2", -2.0, 0.0, 0.0)
-    pose4 = pose("drone3", -2.0, -2.0, 0.0)
+    pose4 = pose("drone3", 0.0, -2.0, 0.0)
     new_drone.new_pose = [pose4]
     pose1_2 = pose("drone0", 1.41, 0.0, 0.0)
     pose2_2 = pose("drone1", -1.0, 1.0, 0.0)

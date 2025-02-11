@@ -30,7 +30,7 @@
 
 """Simple mission for a swarm of drones."""
 
-__authors__ = 'Pedro Arias Pérez'
+__authors__ = 'Pedro Arias Pérez & Carmen De Rojas Pita-Romero'
 __copyright__ = 'Copyright (c) 2024 Universidad Politécnica de Madrid'
 __license__ = 'BSD-3-Clause'
 

@@ -16,6 +16,7 @@ from geometry_msgs.msg import PoseStamped, TransformStamped, TwistStamped
 from std_msgs.msg import Header
 from tf2_msgs.msg import TFMessage
 import tf2_geometry_msgs
+from matplotlib.patches import Polygon
 
 from bag_reader import read_rosbag, deserialize_msgs, deserialize_tfs
 
@@ -89,7 +90,7 @@ class LogData:
     traj: list[PoseStamped] = field(default_factory=list)
     tf_static: dict[str, TransformStamped] = field(default_factory=dict)
 
-    @ classmethod
+    @classmethod
     def from_rosbag(cls, rosbag: Path) -> 'LogData':
         """Read the rosbag"""
         log_data = cls(rosbag)
@@ -277,11 +278,13 @@ def plot_path(data: LogData):
     y = [pose.pose.position.y for pose in data.centroid_poses]
     ax.plot(x, y, label='centroid')
 
-    ax.set_title(f'Path {data.filename.stem}')
+    # ax.set_title(f'Path {data.filename.stem}')
+    ax.set_title(f'Path ')
     ax.set_xlabel('y (m)')
     ax.set_ylabel('x (m)')
     ax.legend()
     ax.grid()
+    plt.show()
     fig.savefig(f"/tmp/path_{data.filename.stem}.png")
     return fig
 
@@ -289,6 +292,9 @@ def plot_path(data: LogData):
 def plot_colored_path(data: LogData):
     """Plot paths"""
     fig, ax = plt.subplots()
+    x_before, y_before = [], []
+    x_after, y_after = [], []
+    x_initial, y_initial = [], []
     for drone, poses, twists in zip(data.poses.keys(), data.poses.values(), data.twists.values()):
         # https://stackoverflow.com/questions/52773215
         x = [pose.pose.position.x for pose in poses]
@@ -302,23 +308,36 @@ def plot_colored_path(data: LogData):
         x = x[1940:]
         y = y[1940:]
         c = c[1940:]
-
+        x_before.append(x[1350])
+        y_before.append(y[1350])
+        x_after.append(x[3000])
+        y_after.append(y[3000])
+        x_initial.append(x[0])
+        y_initial.append(y[0])
         ax.scatter(x, y, s=1, c=c, cmap='plasma')
+        ax.set_ylim(-2, 2)
+
+    # print(f'{len(x)}')
     fig.colorbar(ax.collections[0], ax=ax, label='speed (m/s)')
+    ax.add_patch(Polygon([(x_before[0], y_before[0]), (x_before[1], y_before[1]), (x_before[2],
+                 y_before[2])], alpha=0.2, facecolor="ForestGreen", edgecolor="green", linewidth=2, zorder=1))
+    ax.add_patch(Polygon([(x_after[0], y_after[0]), (x_after[1], y_after[1]), (x_after[2], y_after[2])],
+                 alpha=0.2, facecolor="ForestGreen", edgecolor="green", linewidth=2, zorder=2))
+    ax.add_patch(Polygon([(x_initial[0], y_initial[0]), (x_initial[1], y_initial[1]), (x_initial[2], y_initial[2])],
+                 alpha=0.2, facecolor="ForestGreen", edgecolor="green", linewidth=2, zorder=2))
 
     for drone, poses in zip(data.poses.keys(), data.poses.values()):
         ax.plot(poses[1940].pose.position.x, poses[1940].pose.position.y, 'kD')
         ax.text(poses[1940].pose.position.x - 0.4, poses[1940].pose.position.y + 0.35, drone)
 
-    # x = [pose.pose.position.x for pose in data.centroid_poses]
-    # y = [pose.pose.position.y for pose in data.centroid_poses]
-    # ax.plot(x, y, label='centroid')
-
-    ax.set_title(f'Path {data.filename.stem}')
+    # ax.set_title(f'Path {data.filename.stem}')
+    ax.set_title(f'Path ')
     ax.set_xlabel('x (m)')
     ax.set_ylabel('y (m)')
+
     # ax.legend()
     ax.grid()
+    plt.show()
     fig.savefig(f"/tmp/path_{data.filename.stem}.png")
     return fig
 
@@ -401,14 +420,15 @@ def plot_twist_in_swarm(data: LogData):
                            twist.twist.linear.y ** 2 + twist.twist.angular.z**2))
         sp.append(np.mean(window))
         ts.append(timestamp_to_float(twist.header) - t0)
+        # ax.set_xlim(1, 12)
     ax.plot(ts, sp, label='centroid')
-
     ax.set_title(f'Twists in swarm {data.filename.stem}')
     ax.set_xlabel('time (s)')
     ax.set_ylabel('twist (m/s)')
-    ax.set_ylim(0, 1)
+
     ax.legend()
     ax.grid()
+    plt.show()
     fig.savefig(f"/tmp/twist_in_swarm_{data.filename.stem}.png")
     return fig
 
@@ -419,6 +439,8 @@ def plot_all_twist(data: LogData):
     c = {'drone0': 'r', 'drone1': 'g', 'drone2': 'b'}
 
     fig, ax = plt.subplots()
+    # ax.set_xlim(1, 13)
+    # ax.set_ylim(0, 0.5)
     for drone, twists in zip(data.twists.keys(), data.twists.values()):
         sp, ts = [], []
         for twist in twists:
@@ -427,6 +449,8 @@ def plot_all_twist(data: LogData):
             sp.append(sqrt(twist.twist.linear.x**2 +
                       twist.twist.linear.y ** 2 + twist.twist.angular.z**2))
             ts.append(timestamp_to_float(twist.header) - t0)
+            # ax.set_xlim(1, 13)
+            # ax.set_ylim(0, 0.5)
         ax.plot(ts, sp, c[drone], label=drone)
 
     for drone, twists in zip(data.twists_in_swarm.keys(), data.twists_in_swarm.values()):
@@ -439,6 +463,8 @@ def plot_all_twist(data: LogData):
                                twist.twist.linear.y ** 2 + twist.twist.angular.z**2))
             sp.append(np.mean(window))
             ts.append(timestamp_to_float(twist.header) - t0)
+            # ax.set_xlim(1, 13)
+            # ax.set_ylim(0, 0.5)
         ax.plot(ts, sp, c[drone], linestyle='dotted', label=f'{drone}_rel')
 
     sp, ts = [], []
@@ -450,15 +476,67 @@ def plot_all_twist(data: LogData):
                            twist.twist.linear.y ** 2 + twist.twist.angular.z**2))
         sp.append(np.mean(window))
         ts.append(timestamp_to_float(twist.header) - t0)
+        # ax.set_xlim(1, 13)
+        ax.set_ylim(0, 0.6)
     ax.plot(ts, sp, 'y', label='centroid')
 
-    ax.set_title(f'Twists {data.filename.stem}')
+    # ax.set_title(f'Twists {data.filename.stem}')
     ax.set_xlabel('time (s)')
-    ax.set_ylabel('twist (m/s)')
-    ax.set_ylim(0, 1)
+    ax.set_ylabel('Vel (m/s)')
+    ax.set_xlim(9, 25)
+    ax.set_ylim(0, 0.35)
     ax.legend()
     ax.grid()
     fig.savefig(f"/tmp/twist_in_swarm_{data.filename.stem}.png")
+    return fig
+
+
+def plot_path_formation(data: LogData):
+    """Plot formation during paths"""
+    fig, ax = plt.subplots()
+    x_before, y_before = [], []
+    x_after, y_after = [], []
+    for drone, poses in zip(data.poses.keys(), data.poses.values()):
+        x, y = [], []
+        for pose in poses:
+            if (timestamp_to_float(pose.header) - timestamp_to_float(poses[0].header)) > 42 and (timestamp_to_float(pose.header) - timestamp_to_float(poses[0].header)) < 52:
+                x.append(pose.pose.position.x)
+                y.append(pose.pose.position.y)
+        ax.plot(x, y, linestyle='dotted', label=drone)
+        x_before.append(x[140])
+        y_before.append(y[140])
+
+        if drone == 'drone3':
+            ax.scatter(x[160], y[160], s=100, c='red', marker='o',
+                       label=drone + 'before reconfiguration', zorder=2)
+            continue
+        x_after.append(x[400])
+        y_after.append(y[400])
+        ax.scatter(x[140], y[140], s=100, c='blue', marker='o',
+                   label=drone + 'before reconfiguration', zorder=2)
+        ax.scatter(x[400], y[400], s=100, c='green', marker='D',
+                   label=drone + 'after reconfiguration', zorder=2)
+    # ax.plot(x_before, y_before, c="blue", label='before')
+    ax.add_patch(Polygon([(x_before[0], y_before[0]), (x_before[1], y_before[1]), (x_before[2], y_before[2]),
+                         (x_before[3], y_before[3])], alpha=0.8, facecolor="LightBlue", edgecolor="blue", linewidth=2, zorder=1))
+    ax.add_patch(Polygon([(x_after[0], y_after[0]), (x_after[1], y_after[1]), (x_after[2], y_after[2])],
+                 alpha=0.2, facecolor="ForestGreen", edgecolor="green", linewidth=2, zorder=2))
+
+    x_centroid = [pose.pose.position.x for pose in data.centroid_poses]
+    y_centroid = [pose.pose.position.y for pose in data.centroid_poses]
+
+    # ax.plot(x_centroid, y_centroid, label='centroid')
+    ax.scatter(x_centroid[2550], y_centroid[2550], s=100, c='black', marker='o',
+               label='centroid before reconfiguration', zorder=3)
+    ax.scatter(x_centroid[2800], y_centroid[2800], s=100, c='black', marker='D',
+               label='centroid after reconfiguration', zorder=3)
+    ax.set_xlim(0, 5)
+    ax.set_title(f'Dones before VS after reconfiguration')
+    ax.set_xlabel('x (m)')
+    ax.set_ylabel('y (m)')
+    # ax.legend()
+    ax.grid()
+    fig.savefig(f"/tmp/path_{data.filename.stem}.png")
     return fig
 
 
@@ -477,11 +555,12 @@ def main(log_file: str):
     for log in log_files:
         data = LogData.from_rosbag(log)
 
-        # fig = plot_path(data)
+        fig = plot_path(data)
         # fig2 = plot_twist(data)
         # plot_x(data)
         # plot_twist_in_swarm(data)
-        # plot_all_twist(data)
+        plot_all_twist(data)
+        # plot_path_formation(data)
 
         print(data)
         get_metrics(data)
@@ -491,16 +570,9 @@ def main(log_file: str):
 
 
 if __name__ == "__main__":
-    # main('rosbags/test2')
-    # main('rosbags/rosbag2_2025_01_30-15_09_27')
-    # main('rosbags/Experimentos/lineal/Lineal_Vel_05/rosbags/rosbag2_2025_01_24-12_49_36')
-    main('rosbags/Experimentos/Curva/Curva_Vel_05/rosbags/rosbag2_2025_01_24-13_06_54')
-
-    # main('rosbags/Experimentos/lineal/Lineal_Vel_05/rosbags')
-    # main('rosbags/Experimentos/Lineal_Vel_1/')
-    # main('rosbags/Experimentos/lineal/Lineal_Vel_2')
-    # main('rosbags/Experimentos/Curva/Curva_Vel_05/rosbags')
-    # main('rosbags/Experimentos/Curva/Curva_Vel_1')
-    # main('rosbags/Experimentos/Curva/Curva_Vel_2')
-
-    # main('rosbags/Experimentos/detach_drone')
+    main('rosbags/Experimentos/Linear/Linear05/rosbag2_2025_01_30-15_53_30')
+    # main('rosbags/Experimentos/Curvilinear/Curvilinear05/rosbag2_2025_01_30-16_56_10')
+    # main('rosbags/experiment_real/lineal_2drones')
+    # main('rosbags/experiment_real/orientation_3drones')
+    # main('rosbags/swarm_12/')
+    # main('rosbags/rosbag2_2025_01_30-16_28_12')

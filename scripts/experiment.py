@@ -221,10 +221,7 @@ CURVA2 = [
 ]
 
 if __name__ == "__main__":
-    # exp = Experiment("LINEAL05", LINEAL05)
-    # exp.print_stats()
-
-    exp = Experiment("CURVA2", CURVA2)
+    exp = Experiment("LINEAL05", CURVA1)
     exp.print_stats()
     exp.plot_path()
     plt.show()

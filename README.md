@@ -1,44 +1,81 @@
-# Project AS2 Swarm Control
+<p align="center">
+  <h1 align="center">Flocking behavior for dynamic and complex swarm structures </h1>
 
-Please refer to  for more information.
+ <h2 style="text-align: center;">
+  <a href="#">Paper</a> | 
+  <a href="https://vimeo.com/cvarupm/flocking-behavior">Video</a>
+</h2> 
+</p>
 
-## Installation
+<br>
 
-To install this project, clone the repository:
+<p align="center">
+  <a href="">
+    <img src="./img/banner.png" alt="Logo" width="60%" style="background-color:white;">
+  </a>
+</p>
 
-```bash
-git clone git@github.com:carmendrpr/project_swarm_control.git
+
+## [TABLE OF CONTENTS](#table-of-contents)
+- [Published Papers](#published-papers)
+- [Getting started](#getting-started)
+- [Launch simulation mission](#Launch-simulation-mission)
+- [Launch aunch real mission](#Launch-aunch-real-mission)
+- [Maintainers](#maintainers)
+
+
+## Published Papers
+
+<p align="center">
+  <a href="https://vimeo.com/cvarupm/flocking-behavior">
+    <img src="./img/video_front.png" alt="Logo" width="80%" style="background-color:white;">
+  </a>
+</p>
+
+## Getting started
+This project has been developed in Ubuntu 22.04, ROS 2 Humble and Aerostack2
+
+1. Clone this branch of the Aerostack2 repository
+```sh
+    git clone https://github.com/aerostack2/aerostack2.git -b 674-swarm-behavior-control
+```
+2. Clone this repository 
+```sh
+    git clone https://github.com/carmendrpr/flocking_behavior.git
 ```
 
-To start using this project, please go to the root folder of the project.
-
-## Execution
-
-### 1. Launch aerostack2 nodes for three drone
-To launch aerostack2 nodes for each drone, execute once the following command:
-
+## Launch simulation mission
+### Triangle shape with 3 drones
 ```bash
-./launch_as2.bash -m
+    ./launch_as2.bash 
 ```
-- **-m**: multi agent. Default not set
-
-
-### 2. Launch the mission for three drones
-
+### Dynamic formation 
 ```bash
-python3 mission-swarm.py
+    ./launch_as2.bash -m
 ```
 
-### 4. End the execution
-
-If you are using tmux, you can end the execution with the following command:
-
+### Twelve drones
 ```bash
-./stop.bash
+    ./launch_as2.bash -a
+```
+## How to stop
+```bash
+    ./stop.bash
+```
+## Launch real mission
+
+1. Change the current branch to the real_model
+```sh
+    git checkout real_model
+```
+2. Launch the mission
+```bash
+    ./launch_as2.bash
 ```
 
-You can force the end of all tmux sessions with the command:
-```bash
-tmux kill-server
-```
+## Maintainers
+- <ins>**Carmen De Rojas Pita-Romero**</ins>
+  - **Email:** c.derojas@alumnos.upm.es
+- <ins>**Pedro Arias Pérez**</ins>
+  - **Email:** pedro.ariasp@upm.es
 
