@@ -17,14 +17,14 @@
 
 
 ## [TABLE OF CONTENTS](#table-of-contents)
-- [Published Papers](#published-papers)
+- [Summited Paper ](#summited-paper-for-icuas25)
 - [Getting started](#getting-started)
 - [Launch simulation mission](#Launch-simulation-mission)
 - [Launch aunch real mission](#Launch-aunch-real-mission)
 - [Maintainers](#maintainers)
 
 
-## Published Papers
+## Summited Paper for ICUAS25
 
 <p align="center">
   <a href="https://vimeo.com/cvarupm/flocking-behavior">
