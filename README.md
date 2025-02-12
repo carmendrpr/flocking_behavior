@@ -1,10 +1,21 @@
 <p align="center">
   <h1 align="center">Flocking behavior for dynamic and complex swarm structures </h1>
-
- <h2 style="text-align: center;">
-  <a href="#">Paper</a> | 
+    <p align="center">
+    <a href=><light>Carmen DR.Pita-Romero</light></a>
+    ·
+    <a href=><light>Pedro Arias-Perez</light></a>
+    ·
+    <a href=><light>Rafael Perez-Segui Miguel Fernandez Cortizas</light></a>
+    .
+    <a href=><light>Rafael Perez-Segui </light></a>
+    ·
+    <a href=><light>Pascual Campoy</light></a>
+    ·
+  </p>
+ <h3 style="text-align: center;">
+  <a href="#">In Progress Paper</a> | 
   <a href="https://vimeo.com/cvarupm/flocking-behavior">Video</a>
-</h2> 
+</h3> 
 </p>
 
 <br>
@@ -33,12 +44,15 @@
 </p>
 
 ## Getting started
-This project has been developed in Ubuntu 22.04, ROS 2 Humble and Aerostack2
+This project has been developed in Ubuntu 22.04, ROS 2 Humble and Aerostack2.
 
-1. Clone this branch of the Aerostack2 repository
+
+1. Clone this branch of the Aerostack2 repository and build it
 ```sh
     git clone https://github.com/aerostack2/aerostack2.git -b 674-swarm-behavior-control
 ```
+For more information on how to build it, read the official Aerostack2 documentation[[documentation](https://aerostack2.github.io/)] 
+
 2. Clone this repository 
 ```sh
     git clone https://github.com/carmendrpr/flocking_behavior.git
