@@ -2,6 +2,7 @@
 bag_analyzer.py
 """
 
+from typing import Any
 from collections import deque
 import copy
 from dataclasses import dataclass, field
@@ -74,6 +75,14 @@ def twist_to_polar_vector(twist: TwistStamped) -> tuple[float, float]:
     except ZeroDivisionError:
         phi = 0.0
     return r, theta, phi
+
+
+def time_to_index(time: float, msgs_stamped: list[Any]) -> int:
+    """Get index from time"""
+    for i, msg in enumerate(msgs_stamped):
+        if timestamp_to_float(msg.header) >= time:
+            return i
+    return -1
 
 
 @dataclass
@@ -289,8 +298,8 @@ def plot_path(data: LogData):
     return fig
 
 
-def plot_colored_path(data: LogData):
-    """Plot paths"""
+def plot_colored_path(data: LogData, t0: float = 0.0, tf: float = None):
+    """Plot paths colored with speed"""
     fig, ax = plt.subplots()
     x_before, y_before = [], []
     x_after, y_after = [], []
@@ -304,20 +313,24 @@ def plot_colored_path(data: LogData):
         x = x[:len(c)]
         y = y[:len(c)]
         c = c[:len(x)]
-        # FIXME(pariaspe): hardcoded
-        x = x[1940:]
-        y = y[1940:]
-        c = c[1940:]
-        x_before.append(x[1350])
-        y_before.append(y[1350])
-        x_after.append(x[3000])
-        y_after.append(y[3000])
+
+        i0 = time_to_index(timestamp_to_float(poses[0].header) + t0, poses)
+        i9 = time_to_index(timestamp_to_float(poses[0].header) + tf, poses) if tf else len(x)
+        x = x[i0:i9]
+        y = y[i0:i9]
+        c = c[i0:i9]
+
         x_initial.append(x[0])
         y_initial.append(y[0])
-        ax.scatter(x, y, s=1, c=c, cmap='plasma')
-        ax.set_ylim(-2, 2)
+        x_before.append(x[len(x) // 2])
+        y_before.append(y[len(y) // 2])
+        x_after.append(x[-1])
+        y_after.append(y[-1])
 
-    # print(f'{len(x)}')
+        ax.scatter(x, y, s=1, c=c, cmap='plasma')
+        ax.plot(x[0], y[0], 'kD')
+        ax.text(x[0], y[0] - 0.25, drone)
+
     fig.colorbar(ax.collections[0], ax=ax, label='speed (m/s)')
     ax.add_patch(Polygon([(x_before[0], y_before[0]), (x_before[1], y_before[1]), (x_before[2],
                  y_before[2])], alpha=0.2, facecolor="ForestGreen", edgecolor="green", linewidth=2, zorder=1))
@@ -326,28 +339,29 @@ def plot_colored_path(data: LogData):
     ax.add_patch(Polygon([(x_initial[0], y_initial[0]), (x_initial[1], y_initial[1]), (x_initial[2], y_initial[2])],
                  alpha=0.2, facecolor="ForestGreen", edgecolor="green", linewidth=2, zorder=2))
 
-    for drone, poses in zip(data.poses.keys(), data.poses.values()):
-        ax.plot(poses[1940].pose.position.x, poses[1940].pose.position.y, 'kD')
-        ax.text(poses[1940].pose.position.x - 0.4, poses[1940].pose.position.y + 0.35, drone)
+    # x = [pose.pose.position.x for pose in data.centroid_poses]
+    # y = [pose.pose.position.y for pose in data.centroid_poses]
+    # ax.plot(x, y, label='centroid')
 
-    # ax.set_title(f'Path {data.filename.stem}')
-    ax.set_title(f'Path ')
+    ax.set_title(f'Path {data.filename.stem}')
     ax.set_xlabel('x (m)')
     ax.set_ylabel('y (m)')
 
-    # ax.legend()
     ax.grid()
-    plt.show()
     fig.savefig(f"/tmp/path_{data.filename.stem}.png")
     return fig
 
 
-def plot_x(data: LogData):
+def plot_x(data: LogData, t0: float = 0.0, tf: float = None):
     fig, ax = plt.subplots()
     for drone, poses in zip(data.poses.keys(), data.poses.values()):
         x = [pose.pose.position.x for pose in poses]
         ts = [timestamp_to_float(pose.header) - timestamp_to_float(poses[0].header)
               for pose in poses]
+        i0 = time_to_index(timestamp_to_float(poses[0].header) + t0, poses)
+        i9 = time_to_index(timestamp_to_float(poses[0].header) + tf, poses) if tf else len(x)
+        x = x[i0:i9]
+        ts = ts[i0:i9]
         ax.plot(ts, x, label=drone)
 
     ax.set_title(f'X {data.filename.stem}')
@@ -359,29 +373,35 @@ def plot_x(data: LogData):
     return fig
 
 
-def plot_twist(data: LogData):
+def plot_twist(data: LogData, t0: float = 0.0, tf: float = None):
     """Plot twists"""
-    t0 = timestamp_to_float(data.traj[0].header)
     fig, ax = plt.subplots()
     for drone, twists in zip(data.twists.keys(), data.twists.values()):
-        sp, ts = [], []
-        for twist in twists:
-            if timestamp_to_float(twist.header) < t0:
-                continue
-            sp.append(sqrt(twist.twist.linear.x**2 +
-                      twist.twist.linear.y ** 2 + twist.twist.angular.z**2))
-            ts.append(timestamp_to_float(twist.header) - t0)
+        sp = [sqrt(twist.twist.linear.x**2 + twist.twist.linear.y ** 2 + twist.twist.angular.z**2)
+              for twist in twists]
+        ts = [timestamp_to_float(twist.header) - timestamp_to_float(twists[0].header) - t0
+              for twist in twists]
+
+        i0 = time_to_index(timestamp_to_float(twists[0].header) + t0, twists)
+        i9 = time_to_index(timestamp_to_float(twists[0].header) + tf, twists) if tf else len(sp)
+        sp = sp[i0:i9]
+        ts = ts[i0:i9]
         ax.plot(ts, sp, label=drone)
 
     sp, ts = [], []
     window = deque(maxlen=10)
     for twist in data.centroid_twists:
-        if timestamp_to_float(twist.header) < t0:
-            continue
         window.append(sqrt(twist.twist.linear.x**2 +
                       twist.twist.linear.y ** 2 + twist.twist.angular.z**2))
         sp.append(np.mean(window))
-        ts.append(timestamp_to_float(twist.header) - t0)
+        ts.append(timestamp_to_float(twist.header) -
+                  timestamp_to_float(data.centroid_twists[0].header) - t0)
+    i0 = time_to_index(timestamp_to_float(
+        data.centroid_twists[0].header) + t0, data.centroid_twists)
+    i9 = time_to_index(timestamp_to_float(
+        data.centroid_twists[0].header) + tf, data.centroid_twists) if tf else len(sp)
+    sp = sp[i0:i9]
+    ts = ts[i0:i9]
     ax.plot(ts, sp, label='centroid')
 
     ax.set_title(f'Twists {data.filename.stem}')
@@ -433,58 +453,58 @@ def plot_twist_in_swarm(data: LogData):
     return fig
 
 
-def plot_all_twist(data: LogData):
+def plot_all_twist(data: LogData, t0: float = 0.0, tf: float = None):
     """Plot twists"""
-    t0 = timestamp_to_float(data.traj[0].header)
     c = {'drone0': 'r', 'drone1': 'g', 'drone2': 'b'}
 
     fig, ax = plt.subplots()
     # ax.set_xlim(1, 13)
     # ax.set_ylim(0, 0.5)
     for drone, twists in zip(data.twists.keys(), data.twists.values()):
-        sp, ts = [], []
-        for twist in twists:
-            if timestamp_to_float(twist.header) < t0:
-                continue
-            sp.append(sqrt(twist.twist.linear.x**2 +
-                      twist.twist.linear.y ** 2 + twist.twist.angular.z**2))
-            ts.append(timestamp_to_float(twist.header) - t0)
-            # ax.set_xlim(1, 13)
-            # ax.set_ylim(0, 0.5)
+        sp = [sqrt(twist.twist.linear.x**2 + twist.twist.linear.y ** 2 + twist.twist.angular.z**2)
+              for twist in twists]
+        ts = [timestamp_to_float(twist.header) - timestamp_to_float(twists[0].header) - t0
+              for twist in twists]
+
+        i0 = time_to_index(timestamp_to_float(twists[0].header) + t0, twists)
+        i9 = time_to_index(timestamp_to_float(twists[0].header) + tf, twists) if tf else len(sp)
+        sp = sp[i0:i9]
+        ts = ts[i0:i9]
         ax.plot(ts, sp, c[drone], label=drone)
 
     for drone, twists in zip(data.twists_in_swarm.keys(), data.twists_in_swarm.values()):
         sp, ts = [], []
         window = deque(maxlen=10)
         for twist in twists:
-            if timestamp_to_float(twist.header) < t0:
-                continue
             window.append(sqrt(twist.twist.linear.x**2 +
                                twist.twist.linear.y ** 2 + twist.twist.angular.z**2))
             sp.append(np.mean(window))
-            ts.append(timestamp_to_float(twist.header) - t0)
-            # ax.set_xlim(1, 13)
-            # ax.set_ylim(0, 0.5)
+            ts.append(timestamp_to_float(twist.header) - timestamp_to_float(twists[0].header) - t0)
+        i0 = time_to_index(timestamp_to_float(twists[0].header) + t0, twists)
+        i9 = time_to_index(timestamp_to_float(twists[0].header) + tf, twists) if tf else len(sp)
+        sp = sp[i0:i9]
+        ts = ts[i0:i9]
         ax.plot(ts, sp, c[drone], linestyle='dotted', label=f'{drone}_rel')
 
     sp, ts = [], []
     window = deque(maxlen=10)
     for twist in data.centroid_twists:
-        if timestamp_to_float(twist.header) < t0:
-            continue
         window.append(sqrt(twist.twist.linear.x**2 +
-                           twist.twist.linear.y ** 2 + twist.twist.angular.z**2))
+                      twist.twist.linear.y ** 2 + twist.twist.angular.z**2))
         sp.append(np.mean(window))
-        ts.append(timestamp_to_float(twist.header) - t0)
-        # ax.set_xlim(1, 13)
-        ax.set_ylim(0, 0.6)
+        ts.append(timestamp_to_float(twist.header) -
+                  timestamp_to_float(data.centroid_twists[0].header) - t0)
+    i0 = time_to_index(timestamp_to_float(
+        data.centroid_twists[0].header) + t0, data.centroid_twists)
+    i9 = time_to_index(timestamp_to_float(
+        data.centroid_twists[0].header) + tf, data.centroid_twists) if tf else len(sp)
+    sp = sp[i0:i9]
+    ts = ts[i0:i9]
     ax.plot(ts, sp, 'y', label='centroid')
 
     # ax.set_title(f'Twists {data.filename.stem}')
     ax.set_xlabel('time (s)')
-    ax.set_ylabel('Vel (m/s)')
-    ax.set_xlim(9, 25)
-    ax.set_ylim(0, 0.35)
+    ax.set_ylabel('vel (m/s)')
     ax.legend()
     ax.grid()
     fig.savefig(f"/tmp/twist_in_swarm_{data.filename.stem}.png")
@@ -540,6 +560,25 @@ def plot_path_formation(data: LogData):
     return fig
 
 
+def paper_lineal_05():
+    log = 'rosbags/Experimentos/Linear/Linear05/rosbag2_2025_01_30-15_43_07'
+    data = LogData.from_rosbag(Path(log))
+
+    fig = plot_colored_path(data, t0=30.0, tf=90.0)
+    fig.set_size_inches(6, 3.5)
+    ax = fig.get_axes()[0]
+    ax.set_title('')
+    ax.set_ylim(-2, 2)
+
+    plot_twist(data, t0=30.0, tf=90.0)
+    plot_all_twist(data, t0=30.0, tf=90.0)
+
+    print(data)
+    get_metrics(data)
+
+    plt.show()
+
+
 def main(log_file: str):
     """Main function"""
     if Path(log_file).is_dir():
@@ -555,24 +594,31 @@ def main(log_file: str):
     for log in log_files:
         data = LogData.from_rosbag(log)
 
-        fig = plot_path(data)
-        # fig2 = plot_twist(data)
+        # fig = plot_path(data)
+        # fig2 = plot_twist(data, t0=76.0, tf=89)
         # plot_x(data)
         # plot_twist_in_swarm(data)
-        plot_all_twist(data)
-        # plot_path_formation(data)
+        plot_all_twist(data, t0=76.0, tf=89.0)
 
         print(data)
         get_metrics(data)
-        plot_colored_path(data)
+        plot_colored_path(data, t0=61.0, tf=87.5)
 
         plt.show()
 
 
 if __name__ == "__main__":
-    main('rosbags/Experimentos/Linear/Linear05/rosbag2_2025_01_30-15_53_30')
-    # main('rosbags/Experimentos/Curvilinear/Curvilinear05/rosbag2_2025_01_30-16_56_10')
-    # main('rosbags/experiment_real/lineal_2drones')
-    # main('rosbags/experiment_real/orientation_3drones')
-    # main('rosbags/swarm_12/')
-    # main('rosbags/rosbag2_2025_01_30-16_28_12')
+    paper_lineal_05()
+    # main('rosbags/test2')
+    # main('rosbags/rosbag2_2025_01_30-15_09_27')
+    # main('rosbags/Experimentos/lineal/Lineal_Vel_05/rosbags/rosbag2_2025_01_24-12_49_36')
+    # main('rosbags/lineal_2drones')
+
+    # main('rosbags/Experimentos/lineal/Lineal_Vel_05/rosbags')
+    # main('rosbags/Experimentos/Lineal_Vel_1/')
+    # main('rosbags/Experimentos/lineal/Lineal_Vel_2')
+    # main('rosbags/Experimentos/Curva/Curva_Vel_05/rosbags')
+    # main('rosbags/Experimentos/Curva/Curva_Vel_1')
+    # main('rosbags/Experimentos/Curva/Curva_Vel_2')
+
+    # main('rosbags/Experimentos/detach_drone')

@@ -220,6 +220,10 @@ CURVA2 = [
     'rosbags/Experimentos/Curvilinear/Curvilinear2/rosbag2_2025_01_30-17_48_18',
 ]
 
+REAL_LIN = ['rosbags/lineal_2drones']
+
+REAL_CURV = ['rosbags/orientation_3drones']
+
 if __name__ == "__main__":
     exp = Experiment("LINEAL05", CURVA1)
     exp.print_stats()
