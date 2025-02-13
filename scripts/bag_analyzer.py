@@ -560,6 +560,25 @@ def plot_path_formation(data: LogData):
     return fig
 
 
+def paper_lineal_05():
+    log = 'rosbags/Experimentos/Linear/Linear05/rosbag2_2025_01_30-15_43_07'
+    data = LogData.from_rosbag(Path(log))
+
+    fig = plot_colored_path(data, t0=30.0, tf=90.0)
+    fig.set_size_inches(6, 3.5)
+    ax = fig.get_axes()[0]
+    ax.set_title('')
+    ax.set_ylim(-2, 2)
+
+    plot_twist(data, t0=30.0, tf=90.0)
+    plot_all_twist(data, t0=30.0, tf=90.0)
+
+    print(data)
+    get_metrics(data)
+
+    plt.show()
+
+
 def main(log_file: str):
     """Main function"""
     if Path(log_file).is_dir():
@@ -589,12 +608,11 @@ def main(log_file: str):
 
 
 if __name__ == "__main__":
+    paper_lineal_05()
     # main('rosbags/test2')
     # main('rosbags/rosbag2_2025_01_30-15_09_27')
     # main('rosbags/Experimentos/lineal/Lineal_Vel_05/rosbags/rosbag2_2025_01_24-12_49_36')
-    main('rosbags/Experimentos/Linear/Linear05/rosbag2_2025_01_30-15_53_30')
-    # main('rosbags/Experimentos/Curva/Curva_Vel_05/rosbags/rosbag2_2025_01_24-13_06_54')
-    main('rosbags/lineal_2drones')
+    # main('rosbags/lineal_2drones')
 
     # main('rosbags/Experimentos/lineal/Lineal_Vel_05/rosbags')
     # main('rosbags/Experimentos/Lineal_Vel_1/')
