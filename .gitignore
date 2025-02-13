@@ -1,3 +1,6 @@
 rosbags/*
 __pycache__/*
 *.pyc
+*.csv
+*.zip
+manim_media/
