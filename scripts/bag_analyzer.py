@@ -2,6 +2,7 @@
 bag_analyzer.py
 """
 
+import csv
 from typing import Any
 from collections import deque
 import copy
@@ -249,6 +250,25 @@ class LogData:
         return drone_to_ref_mean_distances
 
 
+def save_log_data_to_csv(data: LogData, filename: str):
+    """Save LogData to a CSV file."""
+    with open(filename, mode='w', newline='') as file:
+        writer = csv.writer(file)
+        # Write headers
+        writer.writerow(['drone', 'time', 'x', 'y', 'speed'])
+        
+        # Write data for each drone
+        for drone, poses, twists in zip(data.poses.keys(), data.poses.values(), data.twists.values()):
+            for pose, twist in zip(poses, twists):
+                time = timestamp_to_float(pose.header)
+                x = pose.pose.position.x
+                y = pose.pose.position.y
+                speed = sqrt(twist.twist.linear.x**2 + twist.twist.linear.y ** 2 + twist.twist.angular.z**2)
+                writer.writerow([drone, time, x, y, speed])
+
+    print(f"Data saved to {filename}")
+
+
 def get_metrics(data: LogData):
     print('------- COHESION -------')
     for k, v in data.cohesion_metric(timestamp_to_float(data.traj[0].header)).items():
@@ -300,6 +320,8 @@ def plot_path(data: LogData):
 
 def plot_colored_path(data: LogData, t0: float = 0.0, tf: float = None):
     """Plot paths colored with speed"""
+    # save_log_data_to_csv(data, 'data.csv')
+
     fig, ax = plt.subplots()
     x_before, y_before = [], []
     x_after, y_after = [], []
