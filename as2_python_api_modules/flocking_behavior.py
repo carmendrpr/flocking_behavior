@@ -36,11 +36,8 @@ __license__ = 'BSD-3-Clause'
 from typing import TYPE_CHECKING, Union
 
 from as2_msgs.action import SwarmFlocking
-# from as2_behavior_swarm_msgs.srv import StartSwarm
-from as2_msgs.srv import SetSwarmFormation
-from as2_msgs.msg import PoseWithID, YawMode
-from geometry_msgs.msg import Pose
-from nav_msgs.msg import Path
+from as2_msgs.msg import PoseWithID
+from geometry_msgs.msg import PoseStamped
 
 from as2_python_api.behavior_actions.behavior_handler import BehaviorHandler
 from as2_python_api.tools.utils import path_to_list
@@ -60,117 +57,46 @@ class FlockingBehavior(BehaviorHandler):
         except self.BehaviorNotAvailable as err:
             self.__drone.get_logger().warn(str(err))
 
-        self._set_swarm_formation = self.__drone.create_client(
-            SetSwarmFormation, '/Swarm/set_swarm_formation')
+        self.__modify_swarm_srv = self.__drone.create_client(
+            SwarmFlocking.Impl.SendGoalService, '/Swarm/swarm_modify_srv')
 
-    def go_to_init_poses(self):
-        """Drones in swarm go to initial poses."""
-        msg = SetSwarmFormation.Request()
-        msg.start_drones = True
-
-        return self._set_swarm_formation.call(msg)
-
-    def modify_formation(self, swarm_formation):
-        msg = SetSwarmFormation.Request()
-        msg.modified_swarm = True
-        msg.swarm_formation = swarm_formation
-        return self._set_swarm_formation.call(msg)
-
-    def new_drone(self, new_drone):
-        msg = SetSwarmFormation.Request()
-        msg.new_drone = True
-        msg.swarm_formation = new_drone
-        return self._set_swarm_formation.call(msg)
-
-    def detach_drone(self, drone_id):
-        msg = SetSwarmFormation.Request()
-        msg.detach_drone = True
-        msg.swarm_formation = drone_id
-        return self._set_swarm_formation.call(msg)
-
-    def start(self, path: Union[list, tuple, Path, PoseWithID],
-              speed: float, yaw_mode: int, yaw_angle: float, frame_id: str = 'earth',
-              wait_result: bool = True) -> bool:
+    def start(self, virtual_centroid: PoseStamped, swarm_formation: list[PoseWithID], drones_namespace: list[str], wait_result: bool = True) -> bool:
         """Start behavior."""
         goal_msg = SwarmFlocking.Goal()
-        goal_msg.swarm_follow_path.header.stamp = self.__drone.get_clock().now().to_msg()
-        goal_msg.swarm_follow_path.header.frame_id = frame_id
-        goal_msg.swarm_follow_path.path = self.__get_path(path)
-        yaw_msg = YawMode()
-        yaw_msg.angle = yaw_angle
-        yaw_msg.mode = yaw_mode
-        goal_msg.swarm_follow_path.yaw_swarm = yaw_msg
-        goal_msg.swarm_follow_path.max_speed = speed
+        goal_msg.virtual_centroid.header.stamp = self.__drone.get_clock().now().to_msg()
+        goal_msg.virtual_centroid.header.frame_id = virtual_centroid.header.frame_id
+        goal_msg.virtual_centroid.pose.position.x = virtual_centroid.pose.position.x
+        goal_msg.virtual_centroid.pose.position.y = virtual_centroid.pose.position.y
+        goal_msg.virtual_centroid.pose.position.z = virtual_centroid.pose.position.z
+        goal_msg.virtual_centroid.pose.orientation.x = virtual_centroid.pose.orientation.x
+        goal_msg.virtual_centroid.pose.orientation.y = virtual_centroid.pose.orientation.y
+        goal_msg.virtual_centroid.pose.orientation.z = virtual_centroid.pose.orientation.z
+        goal_msg.virtual_centroid.pose.orientation.w = virtual_centroid.pose.orientation.w
+        goal_msg.swarm_formation = swarm_formation
+        goal_msg.drones_namespace = drones_namespace
+
         try:
             return super().start(goal_msg, wait_result)
         except self.GoalRejected as err:
             self.__drone.get_logger().warn(str(err))
         return False
 
-    def modify(self, path: Union[list, tuple, Path, PoseWithID],
-               speed: float, yaw_mode: int, yaw_angle: float, new_pose: list, active: bool, frame_id: str = 'earth'):
-        """Modify behavior."""
-        goal_msg = SwarmFlocking.Goal()
-        goal_msg.swarm_follow_path.header.stamp = self.__drone.get_clock().now().to_msg()
-        goal_msg.swarm_follow_path.header.frame_id = frame_id
-        goal_msg.swarm_follow_path.path = self.__get_path(path)
-        yaw_msg = YawMode()
-        yaw_msg.angle = yaw_angle
-        yaw_msg.mode = yaw_mode
-        goal_msg.swarm_follow_path.yaw_swarm = yaw_msg
-        goal_msg.swarm_follow_path.max_speed = speed
-        goal_msg.active = active
-        goal_msg.swarm_formation.new_pose = self.__get_new_pose(new_pose)
+    def modify_swarm_srv(self, virtual_centroid: PoseStamped, swarm_formation: list[PoseWithID], drones_namespace: list[str]):
+        msg = SwarmFlocking.Impl.SendGoalService.Request()
+        msg.goal.virtual_centroid.header.stamp = self.__drone.get_clock().now().to_msg()
+        msg.goal.virtual_centroid.header.frame_id = virtual_centroid.header.frame_id
+        msg.goal.virtual_centroid.pose.position.x = virtual_centroid.pose.position.x
+        msg.goal.virtual_centroid.pose.position.y = virtual_centroid.pose.position.y
+        msg.goal.virtual_centroid.pose.position.z = virtual_centroid.pose.position.z
+        msg.goal.virtual_centroid.pose.orientation.x = virtual_centroid.pose.orientation.x
+        msg.goal.virtual_centroid.pose.orientation.y = virtual_centroid.pose.orientation.y
+        msg.goal.virtual_centroid.pose.orientation.z = virtual_centroid.pose.orientation.z
+        msg.goal.virtual_centroid.pose.orientation.w = virtual_centroid.pose.orientation.w
+        msg.goal.swarm_formation = swarm_formation
+        msg.goal.drones_namespace = drones_namespace
 
-        try:
-            return super().start(goal_msg)
-        except self.GoalRejected as err:
-            self.__drone.get_logger().warn(str(err))
-        return False
-
-        # return super().modify(goal_msg)
-
-    def __get_path(self, path: Union[list, tuple, Path, PoseWithID]):
-        """Get trajectory msg."""
-        point_list = []
-        if isinstance(path, list):
-            if not path:  # not empty
-                raise self.GoalRejected('Goal format invalid')
-            if isinstance(path[0], list):
-                point_list = path
-            else:
-                point_list = [path]
-        elif isinstance(path, tuple):
-            point_list = [list(path)]
-        elif isinstance(path, Path):
-            point_list = path_to_list(path)
-        elif isinstance(path, PoseWithID):
-            return list(path)
-        else:
-            raise self.GoalRejected('Goal format invalid')
-
-        pose_with_id_list = []
-        id_ = 0
-        for waypoint in point_list:
-            pose_with_id = PoseWithID()
-            pose_with_id.pose = Pose()
-            pose_with_id.id = str(id_)
-            pose_with_id.pose.position.x = float(waypoint[0])
-            pose_with_id.pose.position.y = float(waypoint[1])
-            pose_with_id.pose.position.z = float(waypoint[2])
-            pose_with_id_list.append(pose_with_id)
-            id_ += 1
-        return pose_with_id_list
-
-    def __get_new_pose(self, new_pose: list[PoseWithID]):
-        """Get new pose msg."""
-        pose_with_id_list = []
-        for poses in new_pose:
-            pose_with_id = PoseWithID()
-            pose_with_id.pose = Pose()
-            pose_with_id.id = str(poses.id)
-            pose_with_id.pose.position.x = float(poses.pose.position.x)
-            pose_with_id.pose.position.y = float(poses.pose.position.y)
-            pose_with_id.pose.position.z = float(poses.pose.position.z)
-            pose_with_id_list.append(pose_with_id)
-        return pose_with_id_list
+        if not self.__modify_swarm_srv.service_is_ready():
+            self.__drone.get_logger().warn("Service not available")
+            return False
+        self.__modify_swarm_srv.call(msg)
+        return True

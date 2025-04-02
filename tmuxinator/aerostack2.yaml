@@ -63,7 +63,8 @@ windows:
         <%- if base_launch %>
         -  ros2 launch as2_behaviors_swarm_flocking swarm_flocking_behavior.launch.py
             behavior_config_file:=<%= as2_config_file %>
-        - sleep 3 && python3 <%=mission_config%>.py
+        -  python3 <%=mission_config%>.py
+        - python3 move_tf.py
         <%- end %>
 
   # Mission monitoring

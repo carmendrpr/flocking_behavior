@@ -45,6 +45,7 @@ from as2_msgs.msg import YawMode, PoseWithID
 from flocking_behavior import FlockingBehavior
 from as2_python_api.modules.module_base import ModuleBase
 from nav_msgs.msg import Path
+from geometry_msgs.msg import PoseStamped
 
 if typing.TYPE_CHECKING:
     from as2_python_api.drone_interface import DroneInterface
@@ -58,17 +59,8 @@ class FlockingModule(ModuleBase, FlockingBehavior):
     def __init__(self, drone: 'DroneInterface') -> None:
         super().__init__(drone, self.__alias__)
 
-    def on_your_marks(self):
-        """Go to initial poses."""
-        self.go_to_init_poses()
-
-    def modify(self, new_pose: list[PoseWithID]):
-        """Modify the formation of the swarm."""
-        self.modify_poses(new_pose)
-
-    def __call__(self, path: Path, speed: float,
-                 yaw_mode: int = YawMode.KEEP_YAW,
-                 yaw_angle: float = None, frame_id: str = 'earth', wait: bool = True) -> bool:
+    def __call__(self, virtual_centroid: PoseStamped, swarm_formation: list[PoseWithID], drones_namespace: list[str],
+                 wait: bool = True) -> bool:
         """
         Flocking.
 
@@ -87,10 +79,9 @@ class FlockingModule(ModuleBase, FlockingBehavior):
         :return: True if was accepted, False otherwise
         :rtype: bool
         """
-        return self.__flocking(path, speed, yaw_mode, yaw_angle, frame_id, wait)
+        return self.__flocking(virtual_centroid, swarm_formation, drones_namespace, wait)
 
-    def __flocking(self, path: Path,
-                   speed: float, yaw_mode: int, yaw_angle: float, frame_id: str = 'earth',
+    def __flocking(self, virtual_centroid: PoseStamped, swarm_formation: list[PoseWithID], drones_namespace: list[str],
                    wait: bool = True) -> bool:
         """
         Flocking.
@@ -110,58 +101,4 @@ class FlockingModule(ModuleBase, FlockingBehavior):
         :return: True if was accepted, False otherwise
         :rtype: bool
         """
-        return self.start(path=path, speed=speed, yaw_mode=yaw_mode, yaw_angle=yaw_angle,
-                          frame_id=frame_id, wait_result=wait)
-
-    # Method simplifications
-    def flocking_with_keep_yaw(self, path: Path, speed: float, frame_id: str = 'earth') -> bool:
-        """
-        Flocking. With keep yaw mode. Blocking call.
-
-        :param path: path to follow
-        :type path: Path
-        :param speed: speed (m/s) limit
-        :type speed: float
-        :param frame_id: reference frame of the coordinates, defaults to "earth"
-        :type frame_id: str, optional
-        :return: True if was accepted, False otherwise
-        :rtype: bool
-        """
-        return self.__flocking(path, speed,
-                               yaw_mode=YawMode.KEEP_YAW, yaw_angle=0.0, frame_id=frame_id)
-
-    def flocking_with_yaw(self, path: Path, speed: float, angle: float,
-                          frame_id: str = 'earth') -> bool:
-        """
-        Flocking. With desired yaw angle. Blocking call.
-
-        :param path: path to follow
-        :type path: Path
-        :param speed: speed (m/s) limit
-        :type speed: float
-        :param yaw_angle: yaw angle (rad) when fixed yaw is set
-        :type yaw_angle: float
-        :param frame_id: reference frame of the coordinates, defaults to "earth"
-        :type frame_id: str, optional
-        :return: True if was accepted, False otherwise
-        :rtype: bool
-        """
-        return self.__flocking(path, speed,
-                               yaw_mode=YawMode.FIXED_YAW, yaw_angle=angle, frame_id=frame_id)
-
-    def flocking_with_path_facing(self, path: Path, speed: float,
-                                  frame_id: str = 'earth') -> bool:
-        """
-        Flocking. With path facing yaw mode. Blocking call.
-
-        :param path: path to follow
-        :type path: Path
-        :param speed: speed (m/s) limit
-        :type speed: float
-        :param frame_id: reference frame of the coordinates, defaults to "earth"
-        :type frame_id: str, optional
-        :return: True if was accepted, False otherwise
-        :rtype: bool
-        """
-        return self.__flocking(path, speed,
-                               yaw_mode=YawMode.PATH_FACING, yaw_angle=0.0, frame_id=frame_id)
+        return self.start(virtual_centroid=virtual_centroid, swarm_formation=swarm_formation, drones_namespace=drones_namespace, wait_result=wait)

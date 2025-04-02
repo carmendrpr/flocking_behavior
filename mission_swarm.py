@@ -44,7 +44,7 @@ from as2_msgs.msg import BehaviorStatus
 from as2_python_api.drone_interface import DroneInterface
 from as2_python_api.behavior_actions.behavior_handler import BehaviorHandler
 from as2_msgs.msg import PoseWithID
-from as2_msgs.msg import SetSwarmFormation
+from geometry_msgs.msg import PoseStamped
 
 
 class Drone(DroneInterface):
@@ -87,6 +87,7 @@ class SwarmConductor:
     def __init__(self, drones_ns: List[str], verbose: bool = False,
                  use_sim_time: bool = False):
         self.drones: dict[int, Drone] = {}
+        self.drones_ns = drones_ns
         for index, name in enumerate(drones_ns):
             self.drones[index] = Drone(name, verbose, use_sim_time)
 
@@ -123,22 +124,34 @@ class SwarmConductor:
             drone.do_behavior("takeoff", 1, 0.7, False)
         self.wait()
 
-    def on_your_marks(self):
-        """Go to initial poses"""
-        self.drones[0].flocking.on_your_marks()
-
-    def new_formation(self, new_pose: List[PoseWithID]):
-        """Go to initial poses"""
-        self.drones[0].flocking.modify_formation(new_pose)
-
-    def run(self, path: List[List[float]], wait=True) -> None:
-        self.drones[0].flocking(path, 0.5, YawMode.KEEP_YAW, 0.0, "earth", wait)
-
     def land(self):
         """Land swarm and wait for all drones"""
         for drone in self.drones.values():
             drone.do_behavior("land", 0.4, False)
         self.wait()
+
+    def run(self, virtual_centroid: tuple[str, List[float]], swarm_formation: list[tuple[str, list[float]]], drones_namespace: list[str], wait=True) -> None:
+        self.drones[0].flocking(virtual_centroid, swarm_formation, self.drones_ns, wait)
+
+    def modify(self, virtual_centroid: tuple[str, List[float]], swarm_formation: list[tuple[str, list[float]]], drones_namespace: list[str]) -> None:
+        self.drones[0].flocking.modify_swarm_srv(
+            virtual_centroid, swarm_formation, drones_namespace)
+
+    def pause(self):
+        self.drones[0].flocking.pause()
+
+    def resume(self):
+        self.drones[0].flocking.resume()
+
+    def land_one_drone(self, drone_id):
+        """Land one drone"""
+        drone = self.drones[drone_id]
+        drone.do_behavior("land", 0.4, False)
+
+    def takeoff_one_drone(self, dron_id):
+        """Takeoff one drone"""
+        drone = self.drones[dron_id]
+        drone.do_behavior("takeoff", 1, 0.7, False)
 
 
 def confirm(msg: str = 'Continue') -> bool:
@@ -147,6 +160,28 @@ def confirm(msg: str = 'Continue') -> bool:
     if confirmation == "y":
         return True
     return False
+
+
+def pose(id, x, y, z) -> PoseWithID:
+    pose = PoseWithID()
+    pose.id = str(id)
+    pose.pose.position.x = float(x)
+    pose.pose.position.y = float(y)
+    pose.pose.position.z = float(z)
+    return pose
+
+
+def centroid(frame, px, py, pz, ox, oy, oz, ow) -> PoseStamped:
+    virtual_centroid = PoseStamped()
+    virtual_centroid.header.frame_id = str(frame)
+    virtual_centroid.pose.position.x = float(px)
+    virtual_centroid.pose.position.y = float(py)
+    virtual_centroid.pose.position.z = float(pz)
+    virtual_centroid.pose.orientation.x = float(ox)
+    virtual_centroid.pose.orientation.y = float(oy)
+    virtual_centroid.pose.orientation.z = float(oz)
+    virtual_centroid.pose.orientation.w = float(ow)
+    return virtual_centroid
 
 
 def main():
@@ -178,25 +213,50 @@ def main():
         verbose=verbosity,
         use_sim_time=use_sim_time)
     time.sleep(2)
-    # if confirm("Takeoff"):
     swarm.get_ready()
     swarm.takeoff()
     time.sleep(2)
 
-    # if confirm("Go to"):
-    swarm.on_your_marks()
+    """ Define the Swarm Formation"""
+    virtual_centroid = centroid("world", 1.0, 2.0, 1.5, 0.0, 0.0, 0.0, 1.0)
+    drone0 = pose("drone0", -1.0, 1.0, 0.0)
+    drone1 = pose("drone1", 1.41, 0.0, 0.0)
+    drone2 = pose("drone2", -1.0, -1.0, 0.0)
+    swarm_formation = list[PoseWithID]
+    swarm_formation = [drone0, drone1, drone2]
+    new_virtual_centroid = centroid("world", 3.0, 3.0, 1.5, 0.0, 0.0, 0.0, 1.0)
+    new_drone2 = pose("drone2", -2.0, -2.0, 0.0)
+    new_swarm_formation = list[PoseWithID]
+    new_swarm_formation = [drone0, drone1, new_drone2]
+    new_second_swarm_formation = list[PoseWithID]
+    new_second_swarm_formation = [drone0, drone1]
+    new_ns = list[str]
+    new_ns = ['drone0', 'drone1']
+
+    """ Send the action"""
+    swarm.run(virtual_centroid, swarm_formation, swarm.drones_ns, False)
+
+    time.sleep(12)
+
+    """ Modify the virtual centroid"""
+    swarm.modify(new_virtual_centroid, swarm_formation, swarm.drones_ns)
+    time.sleep(12)
+
+    """ Modify the swarm formation"""
+    swarm.modify(new_virtual_centroid, new_swarm_formation, swarm.drones_ns)
+    time.sleep(12)
+
+    """ Modify number of drones"""
+    swarm.modify(new_virtual_centroid, new_second_swarm_formation, new_ns)
+    time.sleep(1)
+    swarm.land_one_drone(2)
     time.sleep(2)
-    # if confirm("Follow path"):
 
-    # path = [[15, 0, 1.5]]
-    path = [[0, -1, 1.5], [0, -2, 1.5], [0, -3, 1.5], [2, -5, 1.5], [4, -3, 1.5], [4, -2,
-                                                                                   1.5], [4, 2, 1.5]]
-    # path = [[3, 0, 0], [5, 2, 0], [5, 4, 0], [5, 6, 0]]
-    swarm.run(path, False)
-
-    # time.sleep(70)
-    time.sleep(57)
-    # confirm("Land")
+    """ Pause and resume the swarm"""
+    swarm.pause()
+    time.sleep(2)
+    swarm.resume()
+    time.sleep(7)
     swarm.land()
 
     print("Shutdown")
