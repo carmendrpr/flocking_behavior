@@ -59,18 +59,13 @@ For more information on how to build it, read the official Aerostack2 documentat
 ```
 
 ## Launch simulation mission
-### Triangle shape with 3 drones
+### Swarm of 3 drones
 ```bash
     ./launch_as2.bash 
 ```
-### Dynamic formation 
+### Swarm of 12 drones
 ```bash
     ./launch_as2.bash -m
-```
-
-### Twelve drones
-```bash
-    ./launch_as2.bash -a
 ```
 ## How to stop
 ```bash

@@ -4,21 +4,19 @@ usage() {
     echo "  options:"
     echo "      -r: record rosbag"
     echo "      -c: motion controller plugin (pid_speed_controller, differential_flatness_controller), choices: [pid, df]. Default: pid"
-    echo "      -m: 4 agent. For mission_dinamic_swarm"
-    echo "      -a: 12 agent. For mission_12"
+    echo "      -m: 12 agent. For mission_12"
     echo "      -n: select drones namespace to launch, values are comma separated. By default, it will get all drones from world description file"
     echo "      -g: launch using gnome-terminal instead of tmux. Default not set"
 }
 
 # Initialize variables with default values
 motion_controller_plugin="pid"
-swarm4="false"
 swarm12="false"
 drones_namespace_comma=""
 use_gnome="false"
 
 # Arg parser
-while getopts "rcman:g" opt; do
+while getopts "rcmn:g" opt; do
   case ${opt} in
     r )
       record_rosbag="true"
@@ -27,9 +25,6 @@ while getopts "rcman:g" opt; do
       motion_controller_plugin="${OPTARG}"
       ;;
     m )
-      swarm4="true"
-      ;;
-    a )
       swarm12="true"
       ;;
     n )
@@ -56,21 +51,16 @@ done
 # HOW TO INCLUDE MODULES FROM THE PROJECT
 export AS2_MODULES_PATH=$AS2_MODULES_PATH:$(pwd)/as2_python_api_modules
 
+ 
 ## DEFAULTS
 record_rosbag=${record_rosbag:="false"}
 
 # Set simulation world description config file for 4 drones or 12 drones
 if [[ ${swarm12} == "true" ]]; then
     simulation_config="config/world_swarm_12.yaml"
-    as2_config_file="config/config_12.yaml"
+    as2_config_file="config/config.yaml"
     mission_file="mission_12"
     echo "$swarm12"
-elif [[ ${swarm4} == "true" ]]; then
-    simulation_config="config/world_swarm_4.yaml"
-    as2_config_file="config/config_4.yaml"
-    rviz_config="config_ground_station/rviz4_config.rviz"
-    mission_file="mission_dinamic_swarm"
-    echo "$swarm4"
 else
     simulation_config="config/world_swarm_3.yaml"
     as2_config_file="config/config.yaml"

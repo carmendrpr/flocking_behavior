@@ -1,7 +1,7 @@
 /**:
   # Global Parameters
   ros__parameters:
-    tf_timeout_threshold: 0.05
+    tf_timeout_threshold: 0.5
 
 /**:
   # Basic Robotics Functions
@@ -58,23 +58,3 @@
       follow_reference_max_speed_y: 5.0
       follow_reference_max_speed_z: 5.0
       tf_timeout_threshold: 0.0
-  SwarmFlockingBehavior:
-    ros__parameters:
-      drone_max_speed: 1.0
-      drone_namespaces:
-        - drone0
-        - drone1
-        - drone2
-      initial_centroid_position:
-        x: 0.0
-        y: 0.0
-        z: 1.5
-      drone0_pose:
-        x: 1.41
-        y: 0.0
-      drone1_pose:
-        x: -1.0
-        y: 1.0
-      drone2_pose:
-        x: -1.0
-        y: -1.0
