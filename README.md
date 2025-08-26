@@ -49,7 +49,7 @@ This project has been developed in Ubuntu 22.04, ROS 2 Humble and Aerostack2.
 
 1. Clone this branch of the Aerostack2 repository and build it
 ```sh
-    git clone https://github.com/aerostack2/aerostack2.git -b 674-swarm-behavior-control
+    git clone https://github.com/aerostack2/aerostack2.git 
 ```
 For more information on how to build it, read the official Aerostack2 documentation[[documentation](https://aerostack2.github.io/)] 
 
