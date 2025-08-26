@@ -5,7 +5,7 @@
     ·
     <a href=><light>Pedro Arias-Perez</light></a>
     ·
-    <a href=><light>Rafael Perez-Segui Miguel Fernandez Cortizas</light></a>
+    <a href=><light> Miguel Fernandez Cortizas</light></a>
     .
     <a href=><light>Rafael Perez-Segui </light></a>
     ·
@@ -13,7 +13,7 @@
     ·
   </p>
  <h3 style="text-align: center;">
-  <a href="#">In Progress Paper</a> | 
+  <a href="https://ieeexplore.ieee.org/abstract/document/11007905?casa_token=KERIIK7x-i4AAAAA:EtxkuWbfB2sOQj1x-6znZGCmU5wtH4UWSCN3BPSIe9TgdwwYpSsoNGel1T2f0yv4owr0a5RS_Q">Paper</a> | 
   <a href="https://vimeo.com/cvarupm/flocking-behavior">Video</a>
 </h3> 
 </p>
@@ -28,10 +28,10 @@
 
 
 ## [TABLE OF CONTENTS](#table-of-contents)
-- [Summited Paper ](#summited-paper-for-icuas25)
+- [Summited Paper](#summited-paper-for-icuas25)
 - [Getting started](#getting-started)
-- [Launch simulation mission](#Launch-simulation-mission)
-- [Launch aunch real mission](#Launch-aunch-real-mission)
+- [Launch simulation mission](lLaunch-simulation-mission)
+- [Launch aunch real mission](#launch-real-mission)
 - [Maintainers](#maintainers)
 
 
@@ -84,7 +84,7 @@ For more information on how to build it, read the official Aerostack2 documentat
 
 ## Maintainers
 - <ins>**Carmen De Rojas Pita-Romero**</ins>
-  - **Email:** c.derojas@alumnos.upm.es
+  - **Email:** c.derojas@upm.es
 - <ins>**Pedro Arias Pérez**</ins>
   - **Email:** pedro.ariasp@upm.es
 
